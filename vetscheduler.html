@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetScheduler Pro</title>
+<style>
+:root {
+  --sidebar-w: 255px;
+  --day-w: 192px;
+  --header-h: 54px;
+  --radius: 8px;
+  --col-gap: 1px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #EEF2F7;
+  color: #1E293B;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+header {
+  height: var(--header-h);
+  background: #0F2D4A;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; display: flex; align-items: center; gap: 7px; }
+.logo-icon { font-size: 22px; }
+.week-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.week-nav button {
+  background: rgba(255,255,255,0.13); border: none; color: white;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 15px; display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+}
+.week-nav button:hover { background: rgba(255,255,255,0.25); }
+.week-nav .today-btn { width: auto; padding: 0 10px; font-size: 12px; font-weight: 600; }
+.week-label { font-size: 13px; font-weight: 500; min-width: 190px; text-align: center; color: rgba(255,255,255,0.9); }
+
+/* ── LAYOUT ── */
+.layout { display: flex; flex: 1; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); background: white;
+  border-right: 1px solid #D4DBE5;
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+}
+.sidebar-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+.sidebar-section { margin-bottom: 14px; }
+.sidebar-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0 3px; }
+.sidebar-section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748B; }
+.add-pool-btn { background: none; border: none; color: #3B82F6; font-size: 19px; cursor: pointer; line-height: 1; padding: 1px 3px; border-radius: 4px; transition: background 0.15s; }
+.add-pool-btn:hover { background: #EFF6FF; }
+
+/* Pool items */
+.pool-item {
+  display: flex; align-items: center; gap: 8px; padding: 7px 9px;
+  border-radius: var(--radius); margin-bottom: 3px;
+  cursor: grab; border: 1px solid #E9EFF6; background: #F8FAFC;
+  transition: all 0.15s; user-select: none; position: relative;
+}
+.pool-item:hover { border-color: #B8C8D8; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transform: translateY(-1px); }
+.pool-item.dragging { opacity: 0.4; }
+.color-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.pool-item-info { flex: 1; min-width: 0; }
+.pool-item-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pool-item-sub { font-size: 10.5px; color: #64748B; margin-top: 1px; }
+.drag-handle { color: #C4CDD8; font-size: 13px; }
+.delete-pool-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); opacity: 0; background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 15px; padding: 2px; transition: opacity 0.15s, color 0.15s; }
+.pool-item:hover .delete-pool-btn { opacity: 1; }
+.delete-pool-btn:hover { color: #EF4444; }
+
+/* Settings panel */
+.settings-panel { padding: 10px 12px 12px; border-top: 1px solid #E2E8F0; background: #F8FAFC; flex-shrink: 0; }
+.settings-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #64748B; margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
+.setting-row { margin-bottom: 9px; }
+.setting-label { font-size: 11px; color: #64748B; margin-bottom: 3px; display: block; }
+.setting-input-row { display: flex; align-items: center; gap: 6px; }
+.setting-input { width: 58px; padding: 4px 7px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; font-weight: 600; color: #1E293B; background: white; }
+.setting-input:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.setting-unit { font-size: 10.5px; color: #64748B; }
+
+/* ── SCHEDULE MAIN ── */
+.schedule-main { flex: 1; overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; }
+.schedule-grid { display: flex; flex: 1; height: 100%; }
+
+/* ── DAY COLUMN ── */
+.day-col {
+  width: var(--day-w); min-width: var(--day-w);
+  border-right: 1px solid #D4DBE5;
+  display: flex; flex-direction: column; background: #F3F7FB;
+  transition: background 0.15s;
+}
+.day-col:last-child { border-right: none; }
+.day-col.drop-target-active { background: #EBF5FF; }
+
+.day-header {
+  padding: 8px 10px 7px; background: white;
+  border-bottom: 2px solid #D4DBE5; flex-shrink: 0;
+}
+.day-name { font-size: 13px; font-weight: 700; color: #1E293B; }
+.day-date { font-size: 10.5px; color: #64748B; margin-top: 1px; }
+.day-col.is-today .day-header { border-bottom-color: #3B82F6; }
+.day-col.is-today .day-name { color: #2563EB; }
+.day-col.is-today .day-date { color: #3B82F6; }
+
+/* Day scroll area */
+.day-scroll { flex: 1; overflow-y: auto; padding: 7px; display: flex; flex-direction: column; gap: 7px; }
+
+/* Day sections */
+.day-section { background: white; border-radius: var(--radius); border: 1px solid #DFE7F0; overflow: hidden; }
+.section-hdr {
+  padding: 4px 8px 4px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #EFF3F8;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-hdr.dvm-hdr { background: #EEF3FF; color: #3730A3; }
+.section-hdr.staff-hdr { background: #ECFDF5; color: #065F46; }
+.section-hdr.visit-hdr { background: #FFF7ED; color: #9A3412; }
+
+.drop-zone { min-height: 38px; padding: 4px; transition: all 0.15s; }
+.drop-zone.dz-over { background: #F0F9FF; outline: 2px dashed #38BDF8; outline-offset: -2px; border-radius: 5px; }
+.no-items-hint { text-align: center; padding: 6px 4px; font-size: 10px; color: #C0CDD8; font-style: italic; }
+
+/* Assigned staff/DVM cards */
+.assigned-card {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 7px; border-radius: 6px; margin-bottom: 3px;
+  border: 1px solid rgba(0,0,0,0.07); cursor: grab;
+  transition: box-shadow 0.15s; position: relative; user-select: none;
+}
+.assigned-card:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.assigned-card:hover .card-rm { opacity: 1; }
+.assigned-card.dragging { opacity: 0.35; }
+.assigned-name { flex: 1; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1E293B; }
+.hrs-edit { display: flex; align-items: center; gap: 1px; background: rgba(0,0,0,0.06); border-radius: 4px; padding: 1px 4px; cursor: default; }
+.hrs-input {
+  width: 26px; border: none; background: transparent; font-size: 11px;
+  font-weight: 700; text-align: center; color: #1E293B; padding: 0;
+}
+.hrs-input:focus { outline: none; }
+.hrs-unit { font-size: 9px; color: #64748B; }
+.card-rm { opacity: 0; background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 15px; padding: 0; line-height: 1; transition: opacity 0.15s, color 0.15s; flex-shrink: 0; }
+.card-rm:hover { color: #EF4444; }
+
+/* Visit cards */
+.visit-card {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 7px; border-radius: 5px; margin-bottom: 3px;
+  background: #FFF7ED; border: 1px solid #FED7AA; cursor: grab;
+  position: relative; transition: box-shadow 0.15s; user-select: none;
+}
+.visit-card:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+.visit-card:hover .card-rm { opacity: 1; }
+.visit-card.dragging { opacity: 0.35; }
+.visit-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.visit-info { flex: 1; min-width: 0; }
+.visit-patient { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1E293B; }
+.visit-meta { font-size: 9.5px; color: #92400E; margin-top: 1px; }
+
+.add-visit-btn {
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  padding: 5px 8px; background: none; border: 1px dashed #C8D5E2;
+  border-radius: 5px; color: #94A3B8; font-size: 10.5px; cursor: pointer;
+  width: 100%; margin: 3px 4px 4px; width: calc(100% - 8px);
+  transition: all 0.15s;
+}
+.add-visit-btn:hover { background: #F0F6FF; border-color: #93B5D0; color: #3B82F6; }
+
+/* ── METRICS ── */
+.day-metrics {
+  background: white; border-top: 2px solid #D4DBE5;
+  padding: 8px 9px 9px; flex-shrink: 0;
+}
+.metrics-summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.ms-stat { text-align: center; padding: 4px 2px; background: #F8FAFC; border-radius: 5px; }
+.ms-val { font-size: 15px; font-weight: 800; color: #1E293B; line-height: 1; }
+.ms-lbl { font-size: 8.5px; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+.metric-block { margin-bottom: 6px; }
+.metric-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.metric-name { font-size: 9.5px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px; }
+.status-chip {
+  font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 10px;
+}
+.chip-ok   { background: #DCFCE7; color: #15803D; }
+.chip-low  { background: #FEE2E2; color: #B91C1C; }
+.chip-high { background: #DBEAFE; color: #1D4ED8; }
+.chip-none { background: #F1F5F9; color: #64748B; }
+
+.metric-bar-wrap {
+  height: 5px; background: #E8EFF6; border-radius: 3px;
+  position: relative; margin-bottom: 1px;
+}
+.metric-bar-fill { height: 100%; border-radius: 3px; transition: width 0.35s, background 0.35s; }
+.metric-target-tick {
+  position: absolute; left: 50%; top: -3px;
+  width: 2px; height: calc(100% + 6px);
+  background: #475569; border-radius: 1px;
+  transform: translateX(-50%);
+}
+.metric-ratio-line { font-size: 9px; color: #94A3B8; text-align: right; }
+
+.no-dvms-msg { text-align: center; font-size: 10px; color: #C0CDD8; padding: 6px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(3px);
+}
+.modal-box { background: white; border-radius: 12px; padding: 22px 24px 20px; width: 330px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-box h2 { font-size: 15px; font-weight: 700; margin-bottom: 15px; color: #0F2D4A; }
+.form-group { margin-bottom: 11px; }
+.form-label { display: block; font-size: 11.5px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+.form-input, .form-select {
+  width: 100%; padding: 7px 10px; border: 1px solid #D1D5DB;
+  border-radius: 7px; font-size: 13px; color: #111827; background: white;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.btn { padding: 8px 14px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: #2563EB; color: white; flex: 1; }
+.btn-primary:hover { background: #1D4ED8; }
+.btn-secondary { background: #F1F5F9; color: #475569; }
+.btn-secondary:hover { background: #E2E8F0; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #C4CDD8; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="logo-icon">🐾</span> VetScheduler Pro</h1>
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)" title="Previous week">‹</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button onclick="changeWeek(1)" title="Next week">›</button>
+    <button class="today-btn" onclick="changeWeek(0)">Today</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-scroll">
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">DVMs</span>
+          <button class="add-pool-btn" onclick="openAddModal('dvm')" title="Add DVM">+</button>
+        </div>
+        <div id="dvm-pool"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Support Staff</span>
+          <button class="add-pool-btn" onclick="openAddModal('staff')" title="Add staff">+</button>
+        </div>
+        <div id="staff-pool"></div>
+      </div>
+    </div>
+    <div class="settings-panel">
+      <div class="settings-title">⚙ Daily Targets</div>
+      <div class="setting-row">
+        <label class="setting-label">Target visits per DVM hour</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtVisits" min="0.1" max="20" step="0.1"
+                 onchange="setTarget('visitsPerDVMHour', this.value)">
+          <span class="setting-unit">visits / DVM-hr</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label class="setting-label">Target support hours per DVM hour</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtSupport" min="0.1" max="10" step="0.1"
+                 onchange="setTarget('supportPerDVMHour', this.value)">
+          <span class="setting-unit">sup-hrs / DVM-hr</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- SCHEDULE GRID -->
+  <main class="schedule-main">
+    <div class="schedule-grid" id="scheduleGrid"></div>
+  </main>
+</div>
+
+<!-- VISIT MODAL -->
+<div class="modal-overlay" id="visitModal" style="display:none" onclick="if(event.target===this)closeModal('visitModal')">
+  <div class="modal-box">
+    <h2>📋 Schedule a Visit</h2>
+    <div class="form-group">
+      <label class="form-label">Patient</label>
+      <input type="text" class="form-input" id="vPatient" placeholder="e.g. Max (Golden Retriever)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Visit Type</label>
+      <select class="form-select" id="vType">
+        <option value="Wellness">Wellness / Annual Exam</option>
+        <option value="Sick">Sick Visit</option>
+        <option value="Surgery">Surgery</option>
+        <option value="Dental">Dental Procedure</option>
+        <option value="Follow-up">Follow-up</option>
+        <option value="Vaccines">Vaccines Only</option>
+        <option value="Emergency">Emergency</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Duration</label>
+      <select class="form-select" id="vDuration">
+        <option value="0.25">15 min</option>
+        <option value="0.5" selected>30 min</option>
+        <option value="0.75">45 min</option>
+        <option value="1">1 hour</option>
+        <option value="1.5">1.5 hours</option>
+        <option value="2">2 hours</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('visitModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="commitVisit()">Add Visit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PERSON MODAL -->
+<div class="modal-overlay" id="addModal" style="display:none" onclick="if(event.target===this)closeModal('addModal')">
+  <div class="modal-box">
+    <h2 id="addModalTitle">Add Person</h2>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="pName" placeholder="Full name">
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="pSubLabel">Specialty</label>
+      <input type="text" class="form-input" id="pSub" placeholder="">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="commitAddPerson()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── CONSTANTS ──────────────────────────────────────────────
+
+const DAY_NAMES  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SHORT  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+const VISIT_COLORS = {
+  Wellness: '#22C55E', Sick: '#EF4444', Surgery: '#8B5CF6',
+  Dental: '#3B82F6', 'Follow-up': '#F59E0B', Vaccines: '#06B6D4',
+  Emergency: '#DC2626', Other: '#94A3B8',
+};
+
+const DVM_PALETTE   = ['#3B82F6','#7C3AED','#DB2777','#F59E0B','#0D9488','#EF4444','#0EA5E9','#F97316','#6366F1','#84CC16'];
+const STAFF_PALETTE = ['#16A34A','#0891B2','#7C3AED','#D97706','#BE123C','#0369A1','#15803D','#9333EA','#C2410C','#0284C7'];
+
+// ── STATE ──────────────────────────────────────────────────
+
+let S = {
+  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5 },
+  dvms: [
+    { id:'dv1', name:'Dr. Smith',    sub:'General Practice', color: DVM_PALETTE[0] },
+    { id:'dv2', name:'Dr. Johnson',  sub:'Surgery',          color: DVM_PALETTE[1] },
+    { id:'dv3', name:'Dr. Williams', sub:'Internal Medicine', color: DVM_PALETTE[2] },
+    { id:'dv4', name:'Dr. Lee',      sub:'Exotic Animals',   color: DVM_PALETTE[3] },
+  ],
+  staff: [
+    { id:'st1', name:'Alice Chen',   sub:'Vet Tech',        color: STAFF_PALETTE[0] },
+    { id:'st2', name:'Bob Martinez', sub:'Vet Tech',        color: STAFF_PALETTE[1] },
+    { id:'st3', name:'Carol Davis',  sub:'Receptionist',    color: STAFF_PALETTE[2] },
+    { id:'st4', name:'Dan Wilson',   sub:'Vet Assistant',   color: STAFF_PALETTE[3] },
+  ],
+  schedule: {},   // keyed by ISO date "YYYY-MM-DD"
+  weekOffset: 0,
+  uid: 500,
+};
+
+// ── DATE HELPERS ───────────────────────────────────────────
+
+function getMonday(ref) {
+  const d = new Date(ref);
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  d.setHours(0,0,0,0);
+  return d;
+}
+function weekStart() {
+  const m = getMonday(new Date());
+  m.setDate(m.getDate() + S.weekOffset * 7);
+  return m;
+}
+function dayDate(di) {
+  const d = new Date(weekStart());
+  d.setDate(d.getDate() + di);
+  return d;
+}
+function dayKey(di) {
+  return dayDate(di).toISOString().split('T')[0];
+}
+function daySchedule(di) {
+  const k = dayKey(di);
+  if (!S.schedule[k]) S.schedule[k] = { dvms:[], staff:[], visits:[] };
+  return S.schedule[k];
+}
+function isToday(di) {
+  return dayDate(di).toDateString() === new Date().toDateString();
+}
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+function weekLabel() {
+  const s = weekStart(), e = new Date(s);
+  e.setDate(e.getDate() + 6);
+  return `${fmtDate(s)} – ${fmtDate(e)}, ${e.getFullYear()}`;
+}
+
+// ── METRICS ────────────────────────────────────────────────
+
+function metrics(di) {
+  const day = daySchedule(di);
+  const dvmH = day.dvms.reduce((s,a) => s + (+a.hours||0), 0);
+  const supH  = day.staff.reduce((s,a) => s + (+a.hours||0), 0);
+  const vis   = day.visits.length;
+  const vRatio = dvmH > 0 ? vis / dvmH : null;
+  const sRatio = dvmH > 0 ? supH / dvmH : null;
+  const tgtVis = dvmH * S.targets.visitsPerDVMHour;
+  const tgtSup = dvmH * S.targets.supportPerDVMHour;
+  return { dvmH, supH, vis, vRatio, sRatio, tgtVis, tgtSup,
+           visDiff: vis - tgtVis, supDiff: supH - tgtSup, hasData: dvmH > 0 };
+}
+
+function chipClass(ratio, target) {
+  if (ratio === null || target === 0) return 'chip-none';
+  const r = ratio / target;
+  if (r >= 0.88 && r <= 1.12) return 'chip-ok';
+  return r < 0.88 ? 'chip-low' : 'chip-high';
+}
+function barColor(chipCls) {
+  return chipCls==='chip-ok' ? '#22C55E' : chipCls==='chip-low' ? '#EF4444' : chipCls==='chip-high' ? '#3B82F6' : '#CBD5E1';
+}
+function barWidth(ratio, target) {
+  if (ratio === null || target === 0) return 0;
+  return Math.min((ratio / (target * 2)) * 100, 100);
+}
+function diffText(diff, unit, roundFn) {
+  if (Math.abs(diff) < (unit==='visits' ? 0.5 : 0.05)) return 'On target';
+  const v = roundFn(Math.abs(diff));
+  return diff < 0 ? `${v} short` : `+${v} over`;
+}
+
+// ── DRAG STATE ────────────────────────────────────────────
+
+let drag = { type:null, id:null, sourceType:null, fromDay:null };
+
+// ── RENDER ────────────────────────────────────────────────
+
+function renderAll() {
+  document.getElementById('weekLabel').textContent = weekLabel();
+  document.getElementById('tgtVisits').value = S.targets.visitsPerDVMHour;
+  document.getElementById('tgtSupport').value = S.targets.supportPerDVMHour;
+  renderPool();
+  renderGrid();
+}
+
+function renderPool() {
+  document.getElementById('dvm-pool').innerHTML = S.dvms.map(d => poolItem(d, 'dvm')).join('');
+  document.getElementById('staff-pool').innerHTML = S.staff.map(s => poolItem(s, 'staff')).join('');
+}
+
+function poolItem(p, type) {
+  return `<div class="pool-item" draggable="true"
+    ondragstart="onPoolDragStart(event,'${type}','${p.id}')"
+    ondragend="onDragEnd(event)">
+    <div class="color-dot" style="background:${p.color}"></div>
+    <div class="pool-item-info">
+      <div class="pool-item-name">${esc(p.name)}</div>
+      <div class="pool-item-sub">${esc(p.sub)}</div>
+    </div>
+    <span class="drag-handle">⠿</span>
+    <button class="delete-pool-btn" onclick="deletePoolItem('${type}','${p.id}',event)" title="Remove">×</button>
+  </div>`;
+}
+
+function renderGrid() {
+  document.getElementById('scheduleGrid').innerHTML =
+    DAY_NAMES.map((_,i) => renderDay(i)).join('');
+}
+
+function renderDay(di) {
+  const day = daySchedule(di);
+  const m = metrics(di);
+  const todayCls = isToday(di) ? ' is-today' : '';
+  const d = dayDate(di);
+  return `
+  <div class="day-col${todayCls}" id="dc${di}">
+    <div class="day-header">
+      <div class="day-name">${DAY_SHORT[di]}</div>
+      <div class="day-date">${fmtDate(d)}</div>
+    </div>
+    <div class="day-scroll">
+      <!-- DVMs -->
+      <div class="day-section">
+        <div class="section-hdr dvm-hdr">
+          <span>DVMs</span>
+          <span style="font-size:9px;font-weight:600;color:#3730A3">${m.dvmH > 0 ? m.dvmH+'h' : '—'}</span>
+        </div>
+        <div class="drop-zone" id="dz-dvm-${di}"
+          ondragover="onDragOver(event,'dvm',${di})"
+          ondragleave="onDragLeave(event)"
+          ondrop="onDrop(event,'dvm',${di})">
+          ${day.dvms.length===0 ? '<div class="no-items-hint">Drag DVMs here</div>' : ''}
+          ${day.dvms.map(a => assignedCard(a,'dvm',di)).join('')}
+        </div>
+      </div>
+      <!-- Support Staff -->
+      <div class="day-section">
+        <div class="section-hdr staff-hdr">
+          <span>Support Staff</span>
+          <span style="font-size:9px;font-weight:600;color:#065F46">${m.supH > 0 ? m.supH+'h' : '—'}</span>
+        </div>
+        <div class="drop-zone" id="dz-staff-${di}"
+          ondragover="onDragOver(event,'staff',${di})"
+          ondragleave="onDragLeave(event)"
+          ondrop="onDrop(event,'staff',${di})">
+          ${day.staff.length===0 ? '<div class="no-items-hint">Drag staff here</div>' : ''}
+          ${day.staff.map(a => assignedCard(a,'staff',di)).join('')}
+        </div>
+      </div>
+      <!-- Visits -->
+      <div class="day-section">
+        <div class="section-hdr visit-hdr">
+          <span>Patient Visits</span>
+          <span style="font-size:9px;font-weight:600;color:#9A3412">${day.visits.length > 0 ? day.visits.length+' scheduled' : '—'}</span>
+        </div>
+        <div class="drop-zone" id="dz-visit-${di}"
+          ondragover="onDragOver(event,'visit',${di})"
+          ondragleave="onDragLeave(event)"
+          ondrop="onDrop(event,'visit',${di})">
+          ${day.visits.length===0 ? '<div class="no-items-hint">No visits yet</div>' : ''}
+          ${day.visits.map(v => visitCard(v, di)).join('')}
+        </div>
+        <button class="add-visit-btn" onclick="openVisitModal(${di})">+ Add Visit</button>
+      </div>
+    </div>
+    <!-- Metrics panel -->
+    <div class="day-metrics" id="dm${di}">${renderMetrics(m)}</div>
+  </div>`;
+}
+
+function assignedCard(a, type, di) {
+  const person = type==='dvm'
+    ? S.dvms.find(d => d.id === a.personId)
+    : S.staff.find(s => s.id === a.personId);
+  if (!person) return '';
+  const bg = hexAlpha(person.color, 0.11);
+  const border = hexAlpha(person.color, 0.28);
+  return `<div class="assigned-card" style="background:${bg};border-color:${border}"
+    draggable="true"
+    ondragstart="onAssignedDragStart(event,'${type}','${a.id}',${di})"
+    ondragend="onDragEnd(event)">
+    <div class="color-dot" style="background:${person.color}"></div>
+    <span class="assigned-name" title="${esc(person.name)}">${esc(person.name)}</span>
+    <div class="hrs-edit">
+      <input type="number" class="hrs-input" value="${a.hours}" min="0.5" max="24" step="0.5"
+        onchange="updateHours('${type}','${a.id}',${di},this.value)"
+        onclick="event.stopPropagation()" title="Hours today">
+      <span class="hrs-unit">h</span>
+    </div>
+    <button class="card-rm" onclick="removeAssigned('${type}','${a.id}',${di})" title="Remove">×</button>
+  </div>`;
+}
+
+function visitCard(v, di) {
+  const col = VISIT_COLORS[v.type] || VISIT_COLORS.Other;
+  const dur = v.duration >= 1 ? v.duration+'h' : (v.duration*60)+'min';
+  return `<div class="visit-card"
+    draggable="true"
+    ondragstart="onAssignedDragStart(event,'visit','${v.id}',${di})"
+    ondragend="onDragEnd(event)">
+    <div class="visit-dot" style="background:${col}"></div>
+    <div class="visit-info">
+      <div class="visit-patient" title="${esc(v.patient)}">${esc(v.patient)}</div>
+      <div class="visit-meta">${esc(v.type)} · ${dur}</div>
+    </div>
+    <button class="card-rm" onclick="removeVisit('${v.id}',${di})" title="Remove">×</button>
+  </div>`;
+}
+
+function renderMetrics(m) {
+  if (!m.hasData) return `<div class="no-dvms-msg">No DVMs scheduled</div>`;
+
+  const vChip = chipClass(m.vRatio, S.targets.visitsPerDVMHour);
+  const sChip = chipClass(m.sRatio, S.targets.supportPerDVMHour);
+  const vBw   = barWidth(m.vRatio, S.targets.visitsPerDVMHour);
+  const sBw   = barWidth(m.sRatio, S.targets.supportPerDVMHour);
+  const vDiff = diffText(m.visDiff, 'visits', v => Math.round(Math.abs(v)));
+  const sDiff = diffText(m.supDiff, 'hours',  v => Math.abs(v).toFixed(1)+'h');
+  const vRatioStr = m.vRatio !== null ? m.vRatio.toFixed(2) : '—';
+  const sRatioStr = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
+
+  return `
+  <div class="metrics-summary">
+    <div class="ms-stat">
+      <div class="ms-val">${m.dvmH}</div>
+      <div class="ms-lbl">DVM hrs</div>
+    </div>
+    <div class="ms-stat">
+      <div class="ms-val">${m.vis}</div>
+      <div class="ms-lbl">Visits</div>
+    </div>
+    <div class="ms-stat">
+      <div class="ms-val">${m.supH}</div>
+      <div class="ms-lbl">Sup hrs</div>
+    </div>
+  </div>
+  <div class="metric-block">
+    <div class="metric-top">
+      <span class="metric-name">Visits / DVM-hr</span>
+      <span class="status-chip ${vChip}">${vDiff}</span>
+    </div>
+    <div class="metric-bar-wrap">
+      <div class="metric-bar-fill" style="width:${vBw}%;background:${barColor(vChip)}"></div>
+      <div class="metric-target-tick"></div>
+    </div>
+    <div class="metric-ratio-line">${vRatioStr} / ${S.targets.visitsPerDVMHour} target</div>
+  </div>
+  <div class="metric-block">
+    <div class="metric-top">
+      <span class="metric-name">Sup hrs / DVM-hr</span>
+      <span class="status-chip ${sChip}">${sDiff}</span>
+    </div>
+    <div class="metric-bar-wrap">
+      <div class="metric-bar-fill" style="width:${sBw}%;background:${barColor(sChip)}"></div>
+      <div class="metric-target-tick"></div>
+    </div>
+    <div class="metric-ratio-line">${sRatioStr} / ${S.targets.supportPerDVMHour} target</div>
+  </div>`;
+}
+
+function refreshMetrics() {
+  for (let i = 0; i < 7; i++) {
+    const el = document.getElementById('dm'+i);
+    if (el) el.innerHTML = renderMetrics(metrics(i));
+    // also update section header totals
+    const dc = document.getElementById('dc'+i);
+    if (!dc) continue;
+    const day = daySchedule(i);
+    const m = metrics(i);
+    const dvmHdr = dc.querySelector('.dvm-hdr span:last-child');
+    const stHdr  = dc.querySelector('.staff-hdr span:last-child');
+    const viHdr  = dc.querySelector('.visit-hdr span:last-child');
+    if (dvmHdr) dvmHdr.textContent = m.dvmH > 0 ? m.dvmH+'h' : '—';
+    if (stHdr)  stHdr.textContent  = m.supH > 0 ? m.supH+'h' : '—';
+    if (viHdr)  viHdr.textContent  = day.visits.length > 0 ? day.visits.length+' scheduled' : '—';
+  }
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────
+
+function onPoolDragStart(e, type, id) {
+  drag = { type, id, sourceType:'pool', fromDay:null };
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', JSON.stringify(drag));
+  e.currentTarget.classList.add('dragging');
+}
+
+function onAssignedDragStart(e, type, id, fromDay) {
+  drag = { type, id, sourceType:'day', fromDay };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', JSON.stringify(drag));
+  setTimeout(() => { if(e.currentTarget) e.currentTarget.classList.add('dragging'); }, 0);
+}
+
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.dz-over').forEach(el => el.classList.remove('dz-over'));
+}
+
+function onDragOver(e, zoneType, di) {
+  if (drag.type !== zoneType) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = drag.sourceType==='pool' ? 'copy' : 'move';
+  e.currentTarget.classList.add('dz-over');
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('dz-over');
+}
+
+function onDrop(e, zoneType, di) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dz-over');
+  if (drag.type !== zoneType) return;
+
+  const day = daySchedule(di);
+
+  if (drag.sourceType === 'pool') {
+    if (drag.type === 'dvm') {
+      if (day.dvms.some(a => a.personId === drag.id)) return; // already assigned
+      day.dvms.push({ id:'a'+(S.uid++), personId: drag.id, hours: 8 });
+    } else if (drag.type === 'staff') {
+      if (day.staff.some(a => a.personId === drag.id)) return;
+      day.staff.push({ id:'a'+(S.uid++), personId: drag.id, hours: 8 });
+    }
+    save(); renderGrid();
+
+  } else if (drag.sourceType === 'day') {
+    if (drag.fromDay === di) return;
+    const fromDay = daySchedule(drag.fromDay);
+
+    if (drag.type === 'dvm') {
+      const idx = fromDay.dvms.findIndex(a => a.id === drag.id);
+      if (idx === -1) return;
+      const [item] = fromDay.dvms.splice(idx, 1);
+      if (!day.dvms.some(a => a.personId === item.personId)) day.dvms.push(item);
+    } else if (drag.type === 'staff') {
+      const idx = fromDay.staff.findIndex(a => a.id === drag.id);
+      if (idx === -1) return;
+      const [item] = fromDay.staff.splice(idx, 1);
+      if (!day.staff.some(a => a.personId === item.personId)) day.staff.push(item);
+    } else if (drag.type === 'visit') {
+      const idx = fromDay.visits.findIndex(v => v.id === drag.id);
+      if (idx === -1) return;
+      const [item] = fromDay.visits.splice(idx, 1);
+      day.visits.push(item);
+    }
+    save(); renderGrid();
+  }
+}
+
+// ── ACTIONS ───────────────────────────────────────────────
+
+function removeAssigned(type, id, di) {
+  const day = daySchedule(di);
+  if (type==='dvm') day.dvms  = day.dvms.filter(a => a.id !== id);
+  else              day.staff = day.staff.filter(a => a.id !== id);
+  save(); renderGrid();
+}
+
+function removeVisit(id, di) {
+  daySchedule(di).visits = daySchedule(di).visits.filter(v => v.id !== id);
+  save(); renderGrid();
+}
+
+function updateHours(type, id, di, val) {
+  const hours = Math.max(0.5, Math.min(24, parseFloat(val)||8));
+  const day = daySchedule(di);
+  const arr = type==='dvm' ? day.dvms : day.staff;
+  const a = arr.find(x => x.id === id);
+  if (a) a.hours = hours;
+  save(); refreshMetrics();
+}
+
+function deletePoolItem(type, id, e) {
+  e.stopPropagation();
+  if (type==='dvm')   S.dvms  = S.dvms.filter(d => d.id !== id);
+  else                S.staff = S.staff.filter(s => s.id !== id);
+  save(); renderPool();
+}
+
+function setTarget(key, val) {
+  S.targets[key] = Math.max(0.1, parseFloat(val)||1);
+  save(); refreshMetrics();
+}
+
+function changeWeek(delta) {
+  S.weekOffset = delta===0 ? 0 : S.weekOffset + delta;
+  save(); renderAll();
+}
+
+// ── VISIT MODAL ───────────────────────────────────────────
+
+let pendingVisitDay = null;
+
+function openVisitModal(di) {
+  pendingVisitDay = di;
+  document.getElementById('vPatient').value = '';
+  document.getElementById('vType').value = 'Wellness';
+  document.getElementById('vDuration').value = '0.5';
+  document.getElementById('visitModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('vPatient').focus(), 50);
+}
+
+function commitVisit() {
+  const patient  = document.getElementById('vPatient').value.trim() || 'Patient';
+  const type     = document.getElementById('vType').value;
+  const duration = parseFloat(document.getElementById('vDuration').value);
+  daySchedule(pendingVisitDay).visits.push({
+    id: 'v'+(S.uid++), patient, type, duration
+  });
+  closeModal('visitModal');
+  save(); renderGrid();
+}
+
+// ── ADD PERSON MODAL ──────────────────────────────────────
+
+let addPersonType = null;
+
+function openAddModal(type) {
+  addPersonType = type;
+  document.getElementById('pName').value = '';
+  document.getElementById('pSub').value = '';
+  if (type==='dvm') {
+    document.getElementById('addModalTitle').textContent = '+ Add DVM';
+    document.getElementById('pSubLabel').textContent = 'Specialty';
+    document.getElementById('pSub').placeholder = 'e.g. General Practice';
+  } else {
+    document.getElementById('addModalTitle').textContent = '+ Add Support Staff';
+    document.getElementById('pSubLabel').textContent = 'Role';
+    document.getElementById('pSub').placeholder = 'e.g. Vet Tech';
+  }
+  document.getElementById('addModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('pName').focus(), 50);
+}
+
+function commitAddPerson() {
+  const name = document.getElementById('pName').value.trim();
+  if (!name) return;
+  const sub = document.getElementById('pSub').value.trim();
+  if (addPersonType==='dvm') {
+    S.dvms.push({ id:'dv'+(S.uid++), name, sub: sub||'General Practice', color: DVM_PALETTE[S.dvms.length % DVM_PALETTE.length] });
+  } else {
+    S.staff.push({ id:'st'+(S.uid++), name, sub: sub||'Support Staff', color: STAFF_PALETTE[S.staff.length % STAFF_PALETTE.length] });
+  }
+  closeModal('addModal'); save(); renderPool();
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay').forEach(o => o.style.display='none');
+  }
+  if (e.key === 'Enter') {
+    const vm = document.getElementById('visitModal');
+    if (vm.style.display !== 'none') { commitVisit(); return; }
+    const am = document.getElementById('addModal');
+    if (am.style.display !== 'none') { commitAddPerson(); return; }
+  }
+});
+
+// ── PERSISTENCE ───────────────────────────────────────────
+
+function save() {
+  try { localStorage.setItem('vsp_v2', JSON.stringify(S)); } catch(_){}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem('vsp_v2');
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    if (p.targets)   S.targets   = { ...S.targets, ...p.targets };
+    if (p.dvms?.length)  S.dvms  = p.dvms;
+    if (p.staff?.length) S.staff = p.staff;
+    if (p.schedule)  S.schedule  = p.schedule;
+    if (p.weekOffset !== undefined) S.weekOffset = p.weekOffset;
+    if (p.uid)       S.uid       = p.uid;
+  } catch(_){}
+}
+
+// ── UTILITY ───────────────────────────────────────────────
+
+function hexAlpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────
+
+load();
+renderAll();
+</script>
+</body>
+</html>
