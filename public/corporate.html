@@ -59,14 +59,14 @@ header h1 { font-size: 17px; font-weight: 700; display: flex; align-items: cente
 .main-content { flex: 1; overflow: auto; padding: 20px; }
 
 /* ── SUMMARY CARDS ── */
-.summary-row { display: flex; gap: 12px; margin-bottom: 20px; }
+.summary-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .summary-card {
-  flex: 1; background: white; border-radius: 10px; padding: 14px 18px;
+  flex: 1; min-width: 130px; background: white; border-radius: 10px; padding: 12px 16px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
-.sc-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #64748B; margin-bottom: 5px; }
-.sc-value { font-size: 26px; font-weight: 800; color: #0F2D4A; line-height: 1; }
-.sc-sub { font-size: 10.5px; color: #94A3B8; margin-top: 3px; }
+.sc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #64748B; margin-bottom: 5px; }
+.sc-value { font-size: 24px; font-weight: 800; color: #0F2D4A; line-height: 1; }
+.sc-sub { font-size: 10px; color: #94A3B8; margin-top: 3px; }
 
 /* ── ROLLUP TABLE ── */
 .table-card {
@@ -86,9 +86,9 @@ thead th {
   letter-spacing: 0.5px; color: #64748B; background: #F8FAFC;
   border-bottom: 2px solid #E2E8F0; text-align: left;
 }
-thead th:first-child { width: 180px; }
-thead th.day-col { text-align: center; min-width: 90px; }
-thead th.total-col { text-align: center; min-width: 90px; background: #F1F5F9; }
+thead th:first-child { width: 160px; }
+thead th.day-col { text-align: center; min-width: 140px; }
+thead th.total-col { text-align: center; min-width: 140px; background: #F1F5F9; }
 .today-col { background: #EFF6FF !important; }
 
 tbody tr { border-bottom: 1px solid #F1F5F9; transition: background 0.1s; }
@@ -96,29 +96,39 @@ tbody tr:hover { background: #FAFBFC; }
 tbody tr.totals-row { background: #F8FAFC; border-top: 2px solid #E2E8F0; font-weight: 700; }
 tbody tr.totals-row td { color: #0F2D4A; }
 
-td { padding: 8px 12px; font-size: 12px; vertical-align: middle; }
-td.location-cell { font-size: 12.5px; font-weight: 600; color: #0F2D4A; }
+td { padding: 8px 10px; font-size: 12px; vertical-align: middle; }
+td.location-cell { font-size: 12px; font-weight: 600; color: #0F2D4A; }
 td.location-cell a {
   color: inherit; text-decoration: none; display: flex; align-items: center; gap: 6px;
 }
 td.location-cell a:hover { color: #2563EB; }
-td.day-cell { text-align: center; cursor: pointer; padding: 6px 8px; }
+td.day-cell { text-align: center; cursor: pointer; padding: 5px 6px; }
 td.day-cell:hover .cell-inner { background: #EFF6FF; border-radius: 6px; }
 td.empty-cell { text-align: center; color: #CBD5E1; font-size: 11px; }
-td.total-cell { text-align: center; background: #F8FAFC; }
+td.total-cell { text-align: center; background: #F8FAFC; cursor: default !important; }
+td.total-cell:hover .cell-inner { background: transparent !important; }
 
 .cell-inner { padding: 6px 8px; border-radius: 5px; transition: background 0.15s; }
-.cell-dvm   { font-size: 12px; font-weight: 700; color: #1E293B; }
-.cell-meta  { font-size: 10px; color: #64748B; margin-top: 2px; display: flex; gap: 6px; justify-content: center; }
-.cell-meta span { display: flex; align-items: center; gap: 2px; }
-.cell-pill  {
-  display: inline-block; font-size: 9.5px; font-weight: 700;
-  padding: 1px 5px; border-radius: 8px; margin-top: 3px;
+
+/* Metric counts row */
+.cell-counts {
+  font-size: 11.5px; display: flex; flex-wrap: wrap; gap: 3px;
+  justify-content: center; align-items: center; margin-bottom: 5px;
 }
-.pill-ok   { background: #DCFCE7; color: #15803D; }
-.pill-low  { background: #FEE2E2; color: #B91C1C; }
-.pill-high { background: #DBEAFE; color: #1D4ED8; }
-.pill-none { background: #F1F5F9; color: #94A3B8; }
+.count-dvm { font-weight: 700; color: #1E293B; }
+.count-sup { color: #475569; font-weight: 600; }
+.count-vis { color: #475569; font-weight: 600; }
+.count-sep { color: #CBD5E1; font-size: 10px; }
+
+/* Ratio chips */
+.cell-ratios { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.ratio-chip {
+  font-size: 10.5px; font-weight: 700; padding: 2px 6px; border-radius: 5px;
+  white-space: nowrap; letter-spacing: 0.2px;
+}
+.ratio-green { background: #DCFCE7; color: #15803D; }
+.ratio-red   { background: #FEE2E2; color: #B91C1C; }
+.ratio-neutral { background: #F1F5F9; color: #64748B; }
 
 /* ── DRILL-DOWN MODAL ── */
 .modal-overlay {
@@ -214,9 +224,8 @@ td.total-cell { text-align: center; background: #F8FAFC; }
         <div class="table-subtitle">Click any cell to drill down into details</div>
       </div>
       <div class="legend">
-        <span class="legend-item"><span class="legend-dot" style="background:#22C55E"></span>On target</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#EF4444"></span>Low</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#3B82F6"></span>High</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#22C55E"></span>At/above target</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#EF4444"></span>Below target</span>
       </div>
     </div>
     <div id="tableWrap"></div>
@@ -309,17 +318,36 @@ const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 // ── METRIC HELPERS ────────────────────────────────────────
 
-function pillClass(dvmHours, visits, supHours, settings) {
-  if (dvmHours === 0) return 'pill-none';
-  const vRatio = visits   / dvmHours;
-  const sRatio = supHours / dvmHours;
-  const vTarget = settings.visits_per_dvm_hour;
-  const sTarget = settings.support_per_dvm_hour;
-  const vOk = vTarget > 0 && vRatio / vTarget >= 0.88 && vRatio / vTarget <= 1.12;
-  const sOk = sTarget > 0 && sRatio / sTarget >= 0.88 && sRatio / sTarget <= 1.12;
-  if (vOk && sOk) return 'pill-ok';
-  if (vRatio / vTarget < 0.88 || sRatio / sTarget < 0.88) return 'pill-low';
-  return 'pill-high';
+// Returns a colored ratio chip HTML string
+function ratioChip(ratio, target, label) {
+  if (!target || target <= 0) return `<span class="ratio-chip ratio-neutral">${label}: —</span>`;
+  const cls = ratio >= target ? 'ratio-green' : 'ratio-red';
+  return `<span class="ratio-chip ${cls}" title="Target: ${target.toFixed(1)}">${label}: ${ratio.toFixed(2)}</span>`;
+}
+
+// Builds a <td> for a day/total cell showing all 5 metrics
+function makeMetricCell(dvmH, supH, vis, settings, clickAttr, isTotal) {
+  const cellClass = isTotal ? 'day-cell total-cell' : 'day-cell';
+  if (!dvmH) return `<td class="${isTotal ? 'empty-cell total-cell' : 'empty-cell'}">—</td>`;
+  const supRatio = supH / dvmH;
+  const visRatio = vis / dvmH;
+  const supChip  = ratioChip(supRatio, settings.support_per_dvm_hour, 'S/D');
+  const visChip  = ratioChip(visRatio, settings.visits_per_dvm_hour, 'V/D');
+  const tdAttrs  = clickAttr
+    ? `class="${cellClass}" onclick="${clickAttr}"`
+    : `class="${cellClass}" style="cursor:default"`;
+  return `<td ${tdAttrs}>
+    <div class="cell-inner">
+      <div class="cell-counts">
+        <span class="count-dvm">${dvmH}h DVM</span>
+        <span class="count-sep">&middot;</span>
+        <span class="count-sup">${supH}h Sup</span>
+        <span class="count-sep">&middot;</span>
+        <span class="count-vis">${vis} visits</span>
+      </div>
+      <div class="cell-ratios">${supChip}${visChip}</div>
+    </div>
+  </td>`;
 }
 
 // ── LOAD DATA ─────────────────────────────────────────────
@@ -339,7 +367,6 @@ function render() {
 }
 
 function renderSummary() {
-  const dates = weekDates();
   let totalDvm = 0, totalSup = 0, totalVis = 0;
   rollupData.forEach(row => {
     row.days.forEach(day => {
@@ -348,6 +375,23 @@ function renderSummary() {
       totalVis += day.visits;
     });
   });
+
+  // Average targets across all locations
+  const avgSupTarget = rollupData.length > 0
+    ? rollupData.reduce((s, r) => s + r.settings.support_per_dvm_hour, 0) / rollupData.length
+    : 1.5;
+  const avgVisTarget = rollupData.length > 0
+    ? rollupData.reduce((s, r) => s + r.settings.visits_per_dvm_hour, 0) / rollupData.length
+    : 2.5;
+
+  const supRatio = totalDvm > 0 ? totalSup / totalDvm : null;
+  const visRatio = totalDvm > 0 ? totalVis / totalDvm : null;
+
+  const supColor = supRatio === null ? '#0F2D4A' : (supRatio >= avgSupTarget ? '#15803D' : '#B91C1C');
+  const visColor = visRatio === null ? '#0F2D4A' : (visRatio >= avgVisTarget ? '#15803D' : '#B91C1C');
+
+  const activeCount = rollupData.filter(r => r.days.some(d => d.dvmHours > 0)).length;
+
   document.getElementById('summaryRow').innerHTML = `
     <div class="summary-card">
       <div class="sc-label">Total DVM Hours</div>
@@ -365,8 +409,18 @@ function renderSummary() {
       <div class="sc-sub">This week, all locations</div>
     </div>
     <div class="summary-card">
+      <div class="sc-label">Support / DVM Ratio</div>
+      <div class="sc-value" style="color:${supColor}">${supRatio !== null ? supRatio.toFixed(2) : '—'}</div>
+      <div class="sc-sub">Target: ${avgSupTarget.toFixed(1)} sup hrs per DVM hr</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Visits / DVM Ratio</div>
+      <div class="sc-value" style="color:${visColor}">${visRatio !== null ? visRatio.toFixed(2) : '—'}</div>
+      <div class="sc-sub">Target: ${avgVisTarget.toFixed(1)} visits per DVM hr</div>
+    </div>
+    <div class="summary-card">
       <div class="sc-label">Locations Active</div>
-      <div class="sc-value">${rollupData.filter(r => r.days.some(d => d.dvmHours > 0)).length}</div>
+      <div class="sc-value">${activeCount}</div>
       <div class="sc-sub">Of ${rollupData.length} total</div>
     </div>`;
 }
@@ -374,18 +428,27 @@ function renderSummary() {
 function renderTable() {
   const dates = weekDates();
 
-  // Column totals
-  const colTotals = dates.map(date => {
-    return {
-      dvmHours: rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.dvmHours || 0), 0),
-      supHours: rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.supHours || 0), 0),
-      visits:   rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.visits   || 0), 0),
-    };
-  });
+  // Column totals (all locations per day)
+  const colTotals = dates.map(date => ({
+    dvmHours: rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.dvmHours || 0), 0),
+    supHours: rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.supHours || 0), 0),
+    visits:   rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.visits   || 0), 0),
+  }));
+
   const weekTotals = {
     dvmHours: colTotals.reduce((s, c) => s + c.dvmHours, 0),
     supHours: colTotals.reduce((s, c) => s + c.supHours, 0),
     visits:   colTotals.reduce((s, c) => s + c.visits,   0),
+  };
+
+  // Aggregate target settings (average across all locations)
+  const aggSettings = {
+    support_per_dvm_hour: rollupData.length > 0
+      ? rollupData.reduce((s, r) => s + r.settings.support_per_dvm_hour, 0) / rollupData.length
+      : 1.5,
+    visits_per_dvm_hour: rollupData.length > 0
+      ? rollupData.reduce((s, r) => s + r.settings.visits_per_dvm_hour, 0) / rollupData.length
+      : 2.5,
   };
 
   let html = `<table>
@@ -409,43 +472,24 @@ function renderTable() {
       </td>
       ${dates.map(date => {
         const day = row.days.find(d => d.date === date);
-        if (!day || day.dvmHours === 0) return `<td class="empty-cell">—</td>`;
-        const pc = pillClass(day.dvmHours, day.visits, day.supHours, row.settings);
-        const statusLabel = pc === 'pill-ok' ? 'On target' : pc === 'pill-low' ? 'Low' : pc === 'pill-high' ? 'High' : '';
-        return `<td class="day-cell" onclick="openDrill(${row.location.id}, '${date}')">
-          <div class="cell-inner">
-            <div class="cell-dvm">${day.dvmHours}h DVM</div>
-            <div class="cell-meta">
-              <span>&#128203; ${day.visits}</span>
-              <span>&#128101; ${day.supHours}h</span>
-            </div>
-            ${statusLabel ? `<div><span class="cell-pill ${pc}">${statusLabel}</span></div>` : ''}
-          </div>
-        </td>`;
+        return makeMetricCell(
+          day?.dvmHours || 0,
+          day?.supHours || 0,
+          day?.visits   || 0,
+          row.settings,
+          `openDrill(${row.location.id}, '${date}')`,
+          false
+        );
       }).join('')}
-      <td class="total-cell">
-        <div style="font-size:12px;font-weight:700">${weekDvm}h DVM</div>
-        <div style="font-size:10.5px;color:#64748B;margin-top:2px">${weekVis} visits &middot; ${weekSup}h sup</div>
-      </td>
+      ${makeMetricCell(weekDvm, weekSup, weekVis, row.settings, null, true)}
     </tr>`;
   });
 
-  // Totals row
+  // All-locations totals row
   html += `<tr class="totals-row">
     <td class="location-cell" style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">All Locations</td>
-    ${colTotals.map((c, i) => {
-      if (c.dvmHours === 0) return `<td class="empty-cell">—</td>`;
-      return `<td class="day-cell" style="cursor:default">
-        <div class="cell-inner">
-          <div class="cell-dvm">${c.dvmHours}h</div>
-          <div class="cell-meta"><span>&#128203; ${c.visits}</span><span>&#128101; ${c.supHours}h</span></div>
-        </div>
-      </td>`;
-    }).join('')}
-    <td class="total-cell" style="font-size:13px;font-weight:800;color:#0F2D4A">
-      ${weekTotals.dvmHours}h<br>
-      <span style="font-size:10.5px;font-weight:600;color:#64748B">${weekTotals.visits} visits &middot; ${weekTotals.supHours}h sup</span>
-    </td>
+    ${colTotals.map(c => makeMetricCell(c.dvmHours, c.supHours, c.visits, aggSettings, null, false)).join('')}
+    ${makeMetricCell(weekTotals.dvmHours, weekTotals.supHours, weekTotals.visits, aggSettings, null, true)}
   </tr>`;
 
   html += '</tbody></table>';
