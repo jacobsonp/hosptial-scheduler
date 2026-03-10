@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetScheduler Pro — Sign In</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #EEF2F7;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-card {
+  background: white;
+  border-radius: 14px;
+  padding: 36px 40px 32px;
+  width: 380px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+}
+.logo { text-align: center; margin-bottom: 24px; }
+.logo-icon { font-size: 40px; display: block; margin-bottom: 8px; }
+.logo h1 { font-size: 20px; font-weight: 800; color: #0F2D4A; }
+.logo p  { font-size: 12px; color: #64748B; margin-top: 3px; }
+.form-group { margin-bottom: 14px; }
+label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+input {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid #D1D5DB; border-radius: 8px;
+  font-size: 14px; color: #111827; background: white;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.btn-login {
+  width: 100%; padding: 10px;
+  background: #1D4ED8; color: white; border: none;
+  border-radius: 8px; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; margin-top: 6px;
+}
+.btn-login:hover { background: #1E40AF; }
+.btn-login:disabled { background: #93C5FD; cursor: not-allowed; }
+.error {
+  background: #FEE2E2; color: #B91C1C; border-radius: 7px;
+  padding: 9px 12px; font-size: 12.5px; margin-bottom: 14px; display: none;
+}
+.hint {
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid #E5E7EB;
+  font-size: 11px; color: #9CA3AF; line-height: 1.7;
+}
+.hint strong { color: #6B7280; }
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="logo">
+    <span class="logo-icon">🐾</span>
+    <h1>VetScheduler Pro</h1>
+    <p>Multi-location veterinary scheduling</p>
+  </div>
+
+  <div class="error" id="errorMsg"></div>
+
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" autocomplete="username" autofocus placeholder="Enter username">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Enter password">
+    </div>
+    <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+  </form>
+
+  <div class="hint">
+    <strong>Demo accounts:</strong><br>
+    corporate / corporate123 — Corporate rollup view<br>
+    downtown / password123 — Downtown Clinic<br>
+    westside / password123 — Westside Animal Hospital<br>
+    northshore / password123 — North Shore Vet Center
+  </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn      = document.getElementById('loginBtn');
+  const errorEl  = document.getElementById('errorMsg');
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  try {
+    const res  = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorEl.textContent  = data.error || 'Login failed';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+      return;
+    }
+
+    if (data.role === 'corporate') window.location.href = '/corporate.html';
+    else if (data.role === 'staff') window.location.href = '/staff.html';
+    else window.location.href = '/scheduler.html';
+  } catch (err) {
+    errorEl.textContent  = 'Network error — please try again';
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+});
+</script>
+</body>
+</html>

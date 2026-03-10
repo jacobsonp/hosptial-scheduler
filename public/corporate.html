@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetScheduler Pro — Corporate Rollup</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #EEF2F7; color: #1E293B;
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── TOP NAV ── */
+.top-nav {
+  height: 40px; background: #0A1F33;
+  display: flex; align-items: center; padding: 0 14px; gap: 6px; flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.nav-link {
+  color: rgba(255,255,255,0.6); text-decoration: none;
+  font-size: 12px; font-weight: 500; padding: 5px 10px;
+  border-radius: 5px; transition: all 0.15s;
+}
+.nav-link:hover { color: white; background: rgba(255,255,255,0.1); }
+.nav-link.active { color: white; background: rgba(255,255,255,0.15); }
+.nav-sep { color: rgba(255,255,255,0.2); font-size: 11px; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.nav-user { color: rgba(255,255,255,0.55); font-size: 11.5px; }
+.nav-logout {
+  color: rgba(255,255,255,0.5); background: none; border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 5px; padding: 3px 9px; font-size: 11.5px; cursor: pointer; transition: all 0.15s;
+}
+.nav-logout:hover { color: white; border-color: rgba(255,255,255,0.4); }
+
+/* ── HEADER ── */
+header {
+  height: 54px; background: #0F2D4A; color: white;
+  display: flex; align-items: center; padding: 0 20px; gap: 12px;
+  flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+header h1 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.header-badge {
+  font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.15);
+  padding: 3px 10px; border-radius: 10px; color: rgba(255,255,255,0.85);
+}
+.week-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.week-nav button {
+  background: rgba(255,255,255,0.13); border: none; color: white;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 15px; display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+}
+.week-nav button:hover { background: rgba(255,255,255,0.25); }
+.week-nav .today-btn { width: auto; padding: 0 10px; font-size: 12px; font-weight: 600; }
+.week-label { font-size: 13px; font-weight: 500; min-width: 190px; text-align: center; color: rgba(255,255,255,0.9); }
+
+/* ── MAIN CONTENT ── */
+.main-content { flex: 1; overflow: auto; padding: 20px; }
+
+/* ── SUMMARY CARDS ── */
+.summary-row { display: flex; gap: 12px; margin-bottom: 20px; }
+.summary-card {
+  flex: 1; background: white; border-radius: 10px; padding: 14px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.sc-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #64748B; margin-bottom: 5px; }
+.sc-value { font-size: 26px; font-weight: 800; color: #0F2D4A; line-height: 1; }
+.sc-sub { font-size: 10.5px; color: #94A3B8; margin-top: 3px; }
+
+/* ── ROLLUP TABLE ── */
+.table-card {
+  background: white; border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08); overflow: hidden;
+}
+.table-header { padding: 14px 18px 12px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; }
+.table-title { font-size: 14px; font-weight: 700; color: #0F2D4A; }
+.table-subtitle { font-size: 11.5px; color: #94A3B8; margin-top: 2px; }
+.legend { display: flex; gap: 12px; font-size: 11px; color: #64748B; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 9px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: #64748B; background: #F8FAFC;
+  border-bottom: 2px solid #E2E8F0; text-align: left;
+}
+thead th:first-child { width: 180px; }
+thead th.day-col { text-align: center; min-width: 90px; }
+thead th.total-col { text-align: center; min-width: 90px; background: #F1F5F9; }
+.today-col { background: #EFF6FF !important; }
+
+tbody tr { border-bottom: 1px solid #F1F5F9; transition: background 0.1s; }
+tbody tr:hover { background: #FAFBFC; }
+tbody tr.totals-row { background: #F8FAFC; border-top: 2px solid #E2E8F0; font-weight: 700; }
+tbody tr.totals-row td { color: #0F2D4A; }
+
+td { padding: 8px 12px; font-size: 12px; vertical-align: middle; }
+td.location-cell { font-size: 12.5px; font-weight: 600; color: #0F2D4A; }
+td.location-cell a {
+  color: inherit; text-decoration: none; display: flex; align-items: center; gap: 6px;
+}
+td.location-cell a:hover { color: #2563EB; }
+td.day-cell { text-align: center; cursor: pointer; padding: 6px 8px; }
+td.day-cell:hover .cell-inner { background: #EFF6FF; border-radius: 6px; }
+td.empty-cell { text-align: center; color: #CBD5E1; font-size: 11px; }
+td.total-cell { text-align: center; background: #F8FAFC; }
+
+.cell-inner { padding: 6px 8px; border-radius: 5px; transition: background 0.15s; }
+.cell-dvm   { font-size: 12px; font-weight: 700; color: #1E293B; }
+.cell-meta  { font-size: 10px; color: #64748B; margin-top: 2px; display: flex; gap: 6px; justify-content: center; }
+.cell-meta span { display: flex; align-items: center; gap: 2px; }
+.cell-pill  {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  padding: 1px 5px; border-radius: 8px; margin-top: 3px;
+}
+.pill-ok   { background: #DCFCE7; color: #15803D; }
+.pill-low  { background: #FEE2E2; color: #B91C1C; }
+.pill-high { background: #DBEAFE; color: #1D4ED8; }
+.pill-none { background: #F1F5F9; color: #94A3B8; }
+
+/* ── DRILL-DOWN MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(3px);
+}
+.modal-box {
+  background: white; border-radius: 14px; padding: 0; width: 520px;
+  max-height: 82vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.modal-head {
+  padding: 18px 22px 14px; border-bottom: 1px solid #E2E8F0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+}
+.modal-head h2 { font-size: 15px; font-weight: 700; color: #0F2D4A; }
+.modal-head p  { font-size: 11.5px; color: #64748B; margin-top: 2px; }
+.modal-close { background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; padding: 0 4px; line-height: 1; }
+.modal-close:hover { color: #EF4444; }
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 22px 20px; }
+
+.drill-section { margin-bottom: 16px; }
+.drill-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+  color: #64748B; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #F1F5F9;
+}
+.drill-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.drill-stat { background: #F8FAFC; border-radius: 7px; padding: 8px 10px; text-align: center; }
+.drill-stat-val { font-size: 20px; font-weight: 800; color: #0F2D4A; }
+.drill-stat-lbl { font-size: 9.5px; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+.person-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 8px; border-radius: 6px; margin: 3px;
+  font-size: 11.5px; font-weight: 500;
+}
+.visit-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid #F8FAFC; font-size: 12px;
+}
+.visit-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.visit-patient { flex: 1; font-weight: 600; }
+.visit-type { font-size: 10.5px; color: #94A3B8; }
+.visit-dur { font-size: 10.5px; color: #94A3B8; }
+.empty-msg { color: #C0CDD8; font-size: 11.5px; font-style: italic; padding: 6px 0; }
+
+.drill-footer {
+  padding: 12px 22px; border-top: 1px solid #E2E8F0;
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+.btn { padding: 7px 14px; border-radius: 7px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: #2563EB; color: white; }
+.btn-primary:hover { background: #1D4ED8; }
+.btn-secondary { background: #F1F5F9; color: #475569; }
+.btn-secondary:hover { background: #E2E8F0; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #C4CDD8; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="/corporate.html" class="nav-link active">Corporate Rollup</a>
+  <span class="nav-sep">|</span>
+  <a href="/scheduler.html" class="nav-link">Scheduler</a>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="nav-logout" onclick="logout()">Sign Out</button>
+  </div>
+</nav>
+
+<header>
+  <h1>&#128196; Corporate Rollup</h1>
+  <span class="header-badge">All Locations</span>
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">&#8249;</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button onclick="changeWeek(1)">&#8250;</button>
+    <button class="today-btn" onclick="changeWeek(0)">Today</button>
+  </div>
+</header>
+
+<div class="main-content">
+  <div class="summary-row" id="summaryRow"></div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Weekly Schedule Overview</div>
+        <div class="table-subtitle">Click any cell to drill down into details</div>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#22C55E"></span>On target</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#EF4444"></span>Low</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#3B82F6"></span>High</span>
+      </div>
+    </div>
+    <div id="tableWrap"></div>
+  </div>
+</div>
+
+<!-- DRILL-DOWN MODAL -->
+<div class="modal-overlay" id="drillModal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h2 id="drillTitle">Location — Day</h2>
+        <p id="drillDate"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="drillBody"></div>
+    <div class="drill-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" id="drillViewBtn" onclick="openScheduler()">Open Scheduler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const VISIT_COLORS = {
+  Wellness:'#22C55E', Sick:'#EF4444', Surgery:'#8B5CF6',
+  Dental:'#3B82F6', 'Follow-up':'#F59E0B', Vaccines:'#06B6D4',
+  Emergency:'#DC2626', Other:'#94A3B8',
+};
+
+let weekOffset = 0;
+let rollupData = [];
+let drillLocId = null;
+let drillDate  = null;
+
+// ── AUTH ──────────────────────────────────────────────────
+
+async function checkAuth() {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) { window.location.href = '/login.html'; return null; }
+  const user = await res.json();
+  if (user.role !== 'corporate') { window.location.href = '/'; return null; }
+  return user;
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+// ── DATE HELPERS ──────────────────────────────────────────
+
+function getMonday(ref) {
+  const d = new Date(ref);
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function weekStart() {
+  const m = getMonday(new Date());
+  m.setDate(m.getDate() + weekOffset * 7);
+  return m;
+}
+function weekStartStr() { return weekStart().toISOString().split('T')[0]; }
+function weekDates() {
+  const s = weekStart();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(s); d.setDate(s.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+}
+function fmtDate(isoStr) {
+  const d = new Date(isoStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function fmtWeekLabel() {
+  const s = weekStart();
+  const e = new Date(s); e.setDate(e.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${fmt(s)} \u2013 ${fmt(e)}, ${e.getFullYear()}`;
+}
+function isToday(isoStr) {
+  return new Date(isoStr + 'T00:00:00').toDateString() === new Date().toDateString();
+}
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+// ── METRIC HELPERS ────────────────────────────────────────
+
+function pillClass(dvmHours, visits, supHours, settings) {
+  if (dvmHours === 0) return 'pill-none';
+  const vRatio = visits   / dvmHours;
+  const sRatio = supHours / dvmHours;
+  const vTarget = settings.visits_per_dvm_hour;
+  const sTarget = settings.support_per_dvm_hour;
+  const vOk = vTarget > 0 && vRatio / vTarget >= 0.88 && vRatio / vTarget <= 1.12;
+  const sOk = sTarget > 0 && sRatio / sTarget >= 0.88 && sRatio / sTarget <= 1.12;
+  if (vOk && sOk) return 'pill-ok';
+  if (vRatio / vTarget < 0.88 || sRatio / sTarget < 0.88) return 'pill-low';
+  return 'pill-high';
+}
+
+// ── LOAD DATA ─────────────────────────────────────────────
+
+async function loadRollup() {
+  const res  = await fetch(`/api/rollup?week=${weekStartStr()}`);
+  rollupData = await res.json();
+  render();
+}
+
+// ── RENDER ────────────────────────────────────────────────
+
+function render() {
+  document.getElementById('weekLabel').textContent = fmtWeekLabel();
+  renderSummary();
+  renderTable();
+}
+
+function renderSummary() {
+  const dates = weekDates();
+  let totalDvm = 0, totalSup = 0, totalVis = 0;
+  rollupData.forEach(row => {
+    row.days.forEach(day => {
+      totalDvm += day.dvmHours;
+      totalSup += day.supHours;
+      totalVis += day.visits;
+    });
+  });
+  document.getElementById('summaryRow').innerHTML = `
+    <div class="summary-card">
+      <div class="sc-label">Total DVM Hours</div>
+      <div class="sc-value">${totalDvm}</div>
+      <div class="sc-sub">This week, all locations</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Total Support Hours</div>
+      <div class="sc-value">${totalSup}</div>
+      <div class="sc-sub">This week, all locations</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Total Patient Visits</div>
+      <div class="sc-value">${totalVis}</div>
+      <div class="sc-sub">This week, all locations</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Locations Active</div>
+      <div class="sc-value">${rollupData.filter(r => r.days.some(d => d.dvmHours > 0)).length}</div>
+      <div class="sc-sub">Of ${rollupData.length} total</div>
+    </div>`;
+}
+
+function renderTable() {
+  const dates = weekDates();
+
+  // Column totals
+  const colTotals = dates.map(date => {
+    return {
+      dvmHours: rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.dvmHours || 0), 0),
+      supHours: rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.supHours || 0), 0),
+      visits:   rollupData.reduce((s, r) => s + (r.days.find(d => d.date === date)?.visits   || 0), 0),
+    };
+  });
+  const weekTotals = {
+    dvmHours: colTotals.reduce((s, c) => s + c.dvmHours, 0),
+    supHours: colTotals.reduce((s, c) => s + c.supHours, 0),
+    visits:   colTotals.reduce((s, c) => s + c.visits,   0),
+  };
+
+  let html = `<table>
+    <thead><tr>
+      <th>Location</th>
+      ${dates.map((d, i) => `<th class="day-col ${isToday(d) ? 'today-col' : ''}">${DAY_SHORT[i]}<br><span style="font-size:9.5px;font-weight:500;color:#94A3B8">${new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></th>`).join('')}
+      <th class="total-col">Week Total</th>
+    </tr></thead>
+    <tbody>`;
+
+  rollupData.forEach(row => {
+    const weekDvm = row.days.reduce((s, d) => s + d.dvmHours, 0);
+    const weekSup = row.days.reduce((s, d) => s + d.supHours, 0);
+    const weekVis = row.days.reduce((s, d) => s + d.visits,   0);
+
+    html += `<tr>
+      <td class="location-cell">
+        <a href="/scheduler.html?loc=${row.location.id}" title="Open scheduler">
+          &#128205; ${esc(row.location.name)}
+        </a>
+      </td>
+      ${dates.map(date => {
+        const day = row.days.find(d => d.date === date);
+        if (!day || day.dvmHours === 0) return `<td class="empty-cell">—</td>`;
+        const pc = pillClass(day.dvmHours, day.visits, day.supHours, row.settings);
+        const statusLabel = pc === 'pill-ok' ? 'On target' : pc === 'pill-low' ? 'Low' : pc === 'pill-high' ? 'High' : '';
+        return `<td class="day-cell" onclick="openDrill(${row.location.id}, '${date}')">
+          <div class="cell-inner">
+            <div class="cell-dvm">${day.dvmHours}h DVM</div>
+            <div class="cell-meta">
+              <span>&#128203; ${day.visits}</span>
+              <span>&#128101; ${day.supHours}h</span>
+            </div>
+            ${statusLabel ? `<div><span class="cell-pill ${pc}">${statusLabel}</span></div>` : ''}
+          </div>
+        </td>`;
+      }).join('')}
+      <td class="total-cell">
+        <div style="font-size:12px;font-weight:700">${weekDvm}h DVM</div>
+        <div style="font-size:10.5px;color:#64748B;margin-top:2px">${weekVis} visits &middot; ${weekSup}h sup</div>
+      </td>
+    </tr>`;
+  });
+
+  // Totals row
+  html += `<tr class="totals-row">
+    <td class="location-cell" style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">All Locations</td>
+    ${colTotals.map((c, i) => {
+      if (c.dvmHours === 0) return `<td class="empty-cell">—</td>`;
+      return `<td class="day-cell" style="cursor:default">
+        <div class="cell-inner">
+          <div class="cell-dvm">${c.dvmHours}h</div>
+          <div class="cell-meta"><span>&#128203; ${c.visits}</span><span>&#128101; ${c.supHours}h</span></div>
+        </div>
+      </td>`;
+    }).join('')}
+    <td class="total-cell" style="font-size:13px;font-weight:800;color:#0F2D4A">
+      ${weekTotals.dvmHours}h<br>
+      <span style="font-size:10.5px;font-weight:600;color:#64748B">${weekTotals.visits} visits &middot; ${weekTotals.supHours}h sup</span>
+    </td>
+  </tr>`;
+
+  html += '</tbody></table>';
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+// ── DRILL-DOWN ─────────────────────────────────────────────
+
+async function openDrill(locId, date) {
+  drillLocId = locId;
+  drillDate  = date;
+
+  const res  = await fetch(`/api/rollup/${locId}/${date}`);
+  const data = await res.json();
+
+  document.getElementById('drillTitle').textContent = data.location.name;
+  document.getElementById('drillDate').textContent  = fmtDate(date);
+
+  const dvmH  = data.dvms.reduce((s, a) => s + a.hours, 0);
+  const supH  = data.staff.reduce((s, a) => s + a.hours, 0);
+  const visits = data.visits.length;
+
+  let body = `
+    <div class="drill-section">
+      <div class="drill-stats">
+        <div class="drill-stat"><div class="drill-stat-val">${dvmH}</div><div class="drill-stat-lbl">DVM Hours</div></div>
+        <div class="drill-stat"><div class="drill-stat-val">${supH}</div><div class="drill-stat-lbl">Support Hours</div></div>
+        <div class="drill-stat"><div class="drill-stat-val">${visits}</div><div class="drill-stat-lbl">Visits</div></div>
+      </div>
+    </div>`;
+
+  // DVMs
+  body += `<div class="drill-section">
+    <div class="drill-title">DVMs Scheduled</div>`;
+  if (data.dvms.length === 0) {
+    body += `<div class="empty-msg">No DVMs scheduled</div>`;
+  } else {
+    data.dvms.forEach(a => {
+      body += `<span class="person-chip" style="background:${hexAlpha(a.color,0.12)};border:1px solid ${hexAlpha(a.color,0.3)}">
+        <span style="width:7px;height:7px;border-radius:50%;background:${a.color};display:inline-block"></span>
+        ${esc(a.name)} &middot; <strong>${a.hours}h</strong>
+      </span>`;
+    });
+  }
+  body += `</div>`;
+
+  // Support staff
+  body += `<div class="drill-section">
+    <div class="drill-title">Support Staff Scheduled</div>`;
+  if (data.staff.length === 0) {
+    body += `<div class="empty-msg">No support staff scheduled</div>`;
+  } else {
+    data.staff.forEach(a => {
+      body += `<span class="person-chip" style="background:${hexAlpha(a.color,0.12)};border:1px solid ${hexAlpha(a.color,0.3)}">
+        <span style="width:7px;height:7px;border-radius:50%;background:${a.color};display:inline-block"></span>
+        ${esc(a.name)} &middot; <em>${esc(a.sub)}</em> &middot; <strong>${a.hours}h</strong>
+      </span>`;
+    });
+  }
+  body += `</div>`;
+
+  // Visits
+  body += `<div class="drill-section">
+    <div class="drill-title">Patient Visits (${data.visits.length})</div>`;
+  if (data.visits.length === 0) {
+    body += `<div class="empty-msg">No visits scheduled</div>`;
+  } else {
+    data.visits.forEach(v => {
+      const col = VISIT_COLORS[v.type] || VISIT_COLORS.Other;
+      const dur = v.duration >= 1 ? v.duration + 'h' : (v.duration * 60) + 'min';
+      body += `<div class="visit-row">
+        <span class="visit-dot" style="background:${col}"></span>
+        <span class="visit-patient">${esc(v.patient)}</span>
+        <span class="visit-type">${esc(v.type)}</span>
+        <span class="visit-dur">${dur}</span>
+      </div>`;
+    });
+  }
+  body += `</div>`;
+
+  document.getElementById('drillBody').innerHTML = body;
+  document.getElementById('drillModal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('drillModal').style.display = 'none';
+}
+
+function openScheduler() {
+  window.location.href = `/scheduler.html?loc=${drillLocId}`;
+}
+
+// ── WEEK NAV ──────────────────────────────────────────────
+
+async function changeWeek(delta) {
+  weekOffset = delta === 0 ? 0 : weekOffset + delta;
+  await loadRollup();
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── UTILITY ───────────────────────────────────────────────
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function hexAlpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ── INIT ──────────────────────────────────────────────────
+
+async function init() {
+  const user = await checkAuth();
+  if (!user) return;
+  document.getElementById('navUser').textContent = user.username;
+  await loadRollup();
+}
+
+init();
+</script>
+</body>
+</html>

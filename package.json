@@ -1,0 +1,14 @@
+{
+  "name": "vetscheduler-pro",
+  "version": "2.0.0",
+  "description": "Multi-location veterinary hospital scheduling system",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3"
+  }
+}
