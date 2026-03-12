@@ -470,7 +470,7 @@ function renderGrid() {
 
   // ─── Visit count row ───
   html += `<tr class="visit-row">
-    <td class="name-cell visit-name-cell" style="border-right:1px solid #E2E8F0">Patient Visits</td>`;
+    <td class="name-cell visit-name-cell" style="border-right:1px solid #E2E8F0"><strong>Patient Visits</strong></td>`;
   dates.forEach((d, i) => {
     const cnt = (S.schedule[d] || {}).visitCount || 0;
     const todayCls = isToday(i) ? ' today-cell' : '';
