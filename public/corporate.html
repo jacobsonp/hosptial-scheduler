@@ -508,9 +508,9 @@ async function openDrill(locId, date) {
   document.getElementById('drillTitle').textContent = data.location.name;
   document.getElementById('drillDate').textContent  = fmtDate(date);
 
-  const dvmH  = data.dvms.reduce((s, a) => s + a.hours, 0);
-  const supH  = data.staff.reduce((s, a) => s + a.hours, 0);
-  const visits = data.visits.length;
+  const dvmH   = data.dvms.reduce((s, a) => s + a.hours, 0);
+  const supH   = data.staff.reduce((s, a) => s + a.hours, 0);
+  const visits = data.visitCount || 0;
 
   let body = `
     <div class="drill-section">
@@ -551,24 +551,12 @@ async function openDrill(locId, date) {
   }
   body += `</div>`;
 
-  // Visits
+  // Visits (count only)
   body += `<div class="drill-section">
-    <div class="drill-title">Patient Visits (${data.visits.length})</div>`;
-  if (data.visits.length === 0) {
-    body += `<div class="empty-msg">No visits scheduled</div>`;
-  } else {
-    data.visits.forEach(v => {
-      const col = VISIT_COLORS[v.type] || VISIT_COLORS.Other;
-      const dur = v.duration >= 1 ? v.duration + 'h' : (v.duration * 60) + 'min';
-      body += `<div class="visit-row">
-        <span class="visit-dot" style="background:${col}"></span>
-        <span class="visit-patient">${esc(v.patient)}</span>
-        <span class="visit-type">${esc(v.type)}</span>
-        <span class="visit-dur">${dur}</span>
-      </div>`;
-    });
-  }
-  body += `</div>`;
+    <div class="drill-title">Patient Visits</div>
+    <div style="font-size:28px;font-weight:800;color:#9A3412;padding:8px 0">${visits}</div>
+    <div style="font-size:11px;color:#94A3B8">visits scheduled this day</div>
+  </div>`;
 
   document.getElementById('drillBody').innerHTML = body;
   document.getElementById('drillModal').style.display = 'flex';

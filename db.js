@@ -81,7 +81,19 @@ db.exec(`
     visits_per_dvm_hour  REAL DEFAULT 2.5,
     support_per_dvm_hour REAL DEFAULT 1.5
   );
+
+  CREATE TABLE IF NOT EXISTS visit_counts (
+    location_id INTEGER NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+    date        TEXT NOT NULL,
+    count       INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (location_id, date)
+  );
 `);
+
+// Safe migrations for existing databases
+const tryExec = sql => { try { db.exec(sql); } catch (_) {} };
+tryExec('ALTER TABLE assignments ADD COLUMN break_hours REAL DEFAULT 0');
+tryExec('ALTER TABLE assignments ADD COLUMN time_off_hours REAL DEFAULT 0');
 
 function seed() {
   const count = db.prepare('SELECT COUNT(*) as c FROM locations').get().c;

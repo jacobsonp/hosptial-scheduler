@@ -165,22 +165,28 @@ app.get('/api/locations/:locId/schedule', requireAuth, (req, res) => {
 
   dates.forEach(date => {
     const dvms  = db.prepare(`
-      SELECT a.id, a.person_id, a.hours, d.name, d.specialty as sub, d.color
+      SELECT a.id, a.person_id, a.hours,
+             COALESCE(a.break_hours, 0) as break_hours,
+             COALESCE(a.time_off_hours, 0) as time_off_hours,
+             d.name, d.specialty as sub, d.color
       FROM assignments a JOIN dvms d ON a.person_id = d.id
       WHERE a.location_id = ? AND a.date = ? AND a.person_type = 'dvm'
     `).all(locId, date);
 
     const staff = db.prepare(`
-      SELECT a.id, a.person_id, a.hours, s.name, s.role_title as sub, s.color
+      SELECT a.id, a.person_id, a.hours,
+             COALESCE(a.break_hours, 0) as break_hours,
+             COALESCE(a.time_off_hours, 0) as time_off_hours,
+             s.name, s.role_title as sub, s.color
       FROM assignments a JOIN support_staff s ON a.person_id = s.id
       WHERE a.location_id = ? AND a.date = ? AND a.person_type = 'staff'
     `).all(locId, date);
 
-    const visits = db.prepare(
-      'SELECT * FROM visits WHERE location_id = ? AND date = ?'
-    ).all(locId, date);
+    const vcRow = db.prepare(
+      'SELECT count FROM visit_counts WHERE location_id = ? AND date = ?'
+    ).get(locId, date);
 
-    schedule[date] = { dvms, staff, visits };
+    schedule[date] = { dvms, staff, visitCount: vcRow ? vcRow.count : 0 };
   });
 
   const settings = db.prepare('SELECT * FROM location_settings WHERE location_id = ?').get(locId)
@@ -196,19 +202,23 @@ app.put('/api/locations/:locId/schedule/:date', requireAuth, (req, res) => {
   if (req.session.role === 'staff') return res.status(403).json({ error: 'Forbidden' });
   if (!canAccessLocation(req, locId)) return res.status(403).json({ error: 'Forbidden' });
 
-  const { dvms, staff, visits } = req.body;
+  const { dvms, staff, visitCount } = req.body;
 
   db.exec('BEGIN');
   try {
     db.prepare('DELETE FROM assignments WHERE location_id = ? AND date = ?').run(locId, date);
-    db.prepare('DELETE FROM visits WHERE location_id = ? AND date = ?').run(locId, date);
 
-    const insA = db.prepare('INSERT INTO assignments (location_id, date, person_id, person_type, hours) VALUES (?,?,?,?,?)');
-    (dvms  || []).forEach(a => insA.run(locId, date, a.personId, 'dvm',   a.hours));
-    (staff || []).forEach(a => insA.run(locId, date, a.personId, 'staff', a.hours));
+    const insA = db.prepare(
+      'INSERT INTO assignments (location_id, date, person_id, person_type, hours, break_hours, time_off_hours) VALUES (?,?,?,?,?,?,?)'
+    );
+    (dvms  || []).forEach(a => insA.run(locId, date, a.personId, 'dvm',   a.hours || 0, a.breakHours || 0, a.timeOffHours || 0));
+    (staff || []).forEach(a => insA.run(locId, date, a.personId, 'staff', a.hours || 0, a.breakHours || 0, a.timeOffHours || 0));
 
-    const insV = db.prepare('INSERT INTO visits (location_id, date, patient, type, duration) VALUES (?,?,?,?,?)');
-    (visits || []).forEach(v => insV.run(locId, date, v.patient, v.type, v.duration));
+    db.prepare(`
+      INSERT INTO visit_counts (location_id, date, count) VALUES (?,?,?)
+      ON CONFLICT(location_id, date) DO UPDATE SET count = excluded.count
+    `).run(locId, date, visitCount != null ? visitCount : 0);
+
     db.exec('COMMIT');
   } catch (e) {
     db.exec('ROLLBACK');
@@ -246,7 +256,8 @@ app.get('/api/rollup', requireRole('corporate'), (req, res) => {
     const days = dates.map(date => {
       const dvmHours = db.prepare(`SELECT COALESCE(SUM(hours),0) as t FROM assignments WHERE location_id=? AND date=? AND person_type='dvm'`).get(loc.id, date).t;
       const supHours = db.prepare(`SELECT COALESCE(SUM(hours),0) as t FROM assignments WHERE location_id=? AND date=? AND person_type='staff'`).get(loc.id, date).t;
-      const visits   = db.prepare('SELECT COUNT(*) as c FROM visits WHERE location_id=? AND date=?').get(loc.id, date).c;
+      const vcRow    = db.prepare('SELECT COALESCE(count, 0) as c FROM visit_counts WHERE location_id=? AND date=?').get(loc.id, date);
+      const visits   = vcRow ? vcRow.c : 0;
       return { date, dvmHours, supHours, visits };
     });
 
@@ -273,9 +284,9 @@ app.get('/api/rollup/:locId/:date', requireRole('corporate'), (req, res) => {
     WHERE a.location_id=? AND a.date=? AND a.person_type='staff'
   `).all(locId, date);
 
-  const visits = db.prepare('SELECT * FROM visits WHERE location_id=? AND date=?').all(locId, date);
+  const vcRow = db.prepare('SELECT COALESCE(count, 0) as c FROM visit_counts WHERE location_id=? AND date=?').get(locId, date);
 
-  res.json({ location, dvms, staff, visits, date });
+  res.json({ location, dvms, staff, visitCount: vcRow ? vcRow.c : 0, date });
 });
 
 // ── TIME LOGS ─────────────────────────────────────────────
