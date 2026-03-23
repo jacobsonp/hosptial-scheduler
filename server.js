@@ -183,14 +183,14 @@ app.get('/api/locations/:locId/schedule', requireAuth, (req, res) => {
     `).all(locId, date);
 
     const vcRow = db.prepare(
-      'SELECT count FROM visit_counts WHERE location_id = ? AND date = ?'
+      'SELECT count, COALESCE(expected_revenue, 0) as expected_revenue FROM visit_counts WHERE location_id = ? AND date = ?'
     ).get(locId, date);
 
-    schedule[date] = { dvms, staff, visitCount: vcRow ? vcRow.count : 0 };
+    schedule[date] = { dvms, staff, visitCount: vcRow ? vcRow.count : 0, expectedRevenue: vcRow ? vcRow.expected_revenue : 0 };
   });
 
   const settings = db.prepare('SELECT * FROM location_settings WHERE location_id = ?').get(locId)
-    || { visits_per_dvm_hour: 2.5, support_per_dvm_hour: 1.5 };
+    || { visits_per_dvm_hour: 2.5, support_per_dvm_hour: 1.5, support_comp_pct_target: 30 };
 
   const location = db.prepare('SELECT * FROM locations WHERE id = ?').get(locId);
 
@@ -202,7 +202,7 @@ app.put('/api/locations/:locId/schedule/:date', requireAuth, (req, res) => {
   if (req.session.role === 'staff') return res.status(403).json({ error: 'Forbidden' });
   if (!canAccessLocation(req, locId)) return res.status(403).json({ error: 'Forbidden' });
 
-  const { dvms, staff, visitCount } = req.body;
+  const { dvms, staff, visitCount, expectedRevenue } = req.body;
 
   db.exec('BEGIN');
   try {
@@ -215,9 +215,9 @@ app.put('/api/locations/:locId/schedule/:date', requireAuth, (req, res) => {
     (staff || []).forEach(a => insA.run(locId, date, a.personId, 'staff', a.hours || 0, a.breakHours || 0, a.timeOffHours || 0));
 
     db.prepare(`
-      INSERT INTO visit_counts (location_id, date, count) VALUES (?,?,?)
-      ON CONFLICT(location_id, date) DO UPDATE SET count = excluded.count
-    `).run(locId, date, visitCount != null ? visitCount : 0);
+      INSERT INTO visit_counts (location_id, date, count, expected_revenue) VALUES (?,?,?,?)
+      ON CONFLICT(location_id, date) DO UPDATE SET count = excluded.count, expected_revenue = excluded.expected_revenue
+    `).run(locId, date, visitCount != null ? visitCount : 0, expectedRevenue != null ? expectedRevenue : 0);
 
     db.exec('COMMIT');
   } catch (e) {
@@ -232,11 +232,23 @@ app.put('/api/locations/:locId/settings', requireAuth, (req, res) => {
   const { locId } = req.params;
   if (req.session.role === 'staff') return res.status(403).json({ error: 'Forbidden' });
   if (!canAccessLocation(req, locId)) return res.status(403).json({ error: 'Forbidden' });
-  const { visitsPerDVMHour, supportPerDVMHour } = req.body;
+  const { visitsPerDVMHour, supportPerDVMHour, supportCompPctTarget } = req.body;
   db.prepare(`
-    INSERT INTO location_settings (location_id, visits_per_dvm_hour, support_per_dvm_hour) VALUES (?,?,?)
-    ON CONFLICT(location_id) DO UPDATE SET visits_per_dvm_hour=excluded.visits_per_dvm_hour, support_per_dvm_hour=excluded.support_per_dvm_hour
-  `).run(locId, visitsPerDVMHour, supportPerDVMHour);
+    INSERT INTO location_settings (location_id, visits_per_dvm_hour, support_per_dvm_hour, support_comp_pct_target) VALUES (?,?,?,?)
+    ON CONFLICT(location_id) DO UPDATE SET visits_per_dvm_hour=excluded.visits_per_dvm_hour, support_per_dvm_hour=excluded.support_per_dvm_hour, support_comp_pct_target=excluded.support_comp_pct_target
+  `).run(locId, visitsPerDVMHour, supportPerDVMHour, supportCompPctTarget != null ? supportCompPctTarget : 30);
+  res.json({ ok: true });
+});
+
+app.patch('/api/locations/:locId/staff/:id', requireAuth, (req, res) => {
+  const { locId, id } = req.params;
+  if (req.session.role === 'staff') return res.status(403).json({ error: 'Forbidden' });
+  if (!canAccessLocation(req, locId)) return res.status(403).json({ error: 'Forbidden' });
+  const { hourlyRate } = req.body;
+  if (hourlyRate !== undefined) {
+    db.prepare('UPDATE support_staff SET hourly_rate = ? WHERE id = ? AND location_id = ?')
+      .run(Math.max(0, parseFloat(hourlyRate) || 0), id, locId);
+  }
   res.json({ ok: true });
 });
 

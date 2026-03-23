@@ -94,6 +94,9 @@ db.exec(`
 const tryExec = sql => { try { db.exec(sql); } catch (_) {} };
 tryExec('ALTER TABLE assignments ADD COLUMN break_hours REAL DEFAULT 0');
 tryExec('ALTER TABLE assignments ADD COLUMN time_off_hours REAL DEFAULT 0');
+tryExec('ALTER TABLE support_staff ADD COLUMN hourly_rate REAL DEFAULT 0');
+tryExec('ALTER TABLE visit_counts ADD COLUMN expected_revenue REAL DEFAULT 0');
+tryExec('ALTER TABLE location_settings ADD COLUMN support_comp_pct_target REAL DEFAULT 30');
 
 function seed() {
   const count = db.prepare('SELECT COUNT(*) as c FROM locations').get().c;

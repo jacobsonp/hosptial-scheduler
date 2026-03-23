@@ -188,6 +188,39 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .sched-cell:hover .rm-day-btn { opacity: 1; }
 .rm-day-btn:hover { color: #EF4444; }
 
+/* ── RATE COLUMN ── */
+.rate-th {
+  width: 72px; min-width: 72px; background: #1E2A38 !important;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.rate-th-inner { padding: 10px 4px 8px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.5px; }
+.rate-cell {
+  width: 72px; min-width: 72px; max-width: 72px;
+  border-right: 1px solid #E2E8F0; vertical-align: middle;
+  text-align: center; padding: 6px 4px; background: white;
+}
+.person-row td.rate-cell { border-bottom: 1px solid #EEF1F6; }
+.rate-in {
+  width: 58px; padding: 4px 3px; border: 1px solid #D1D5DB;
+  border-radius: 6px; font-size: 13px; font-weight: 700;
+  text-align: center; color: #1E293B; background: white; display: block; margin: 0 auto;
+}
+.rate-in:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.rate-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
+.rate-lbl { font-size: 9px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; display: block; margin-top: 2px; }
+
+/* ── EXPECTED REVENUE ── */
+.rev-in {
+  width: 72px; padding: 3px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
+  font-size: 13px; font-weight: 700; text-align: center; color: #0F766E;
+  background: white; display: block; margin: 4px auto 0;
+}
+.rev-in:focus { outline: none; border-color: #0D9488; box-shadow: 0 0 0 2px rgba(13,148,136,0.15); }
+.rev-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
+.visit-rev-lbl { font-size: 9px; color: #0F766E; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; display: block; }
+.visit-name-cell-inner { display: flex; flex-direction: column; gap: 0; }
+.visit-label-group { line-height: 1.3; }
+
 /* ── METRICS SECTION ── */
 .metrics-section-hdr { background: #F1F4F8; }
 
@@ -290,6 +323,14 @@ table.sched-table { border-collapse: collapse; width: 100%; }
           <span class="setting-unit">hrs/hr</span>
         </div>
       </div>
+      <div class="setting-row">
+        <label class="setting-label">Support comp % of revenue target</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtSupCompPct" min="1" max="100" step="1"
+                 onchange="setTarget('supportCompPctTarget', this.value)">
+          <span class="setting-unit">%</span>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -329,7 +370,7 @@ let locationId  = null;
 let allLocations = [];
 let isReadOnly  = false;
 let S = {
-  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5 },
+  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5, supportCompPctTarget: 30 },
   dvms: [], staff: [], schedule: {}, weekOffset: 0, uid: 1,
 };
 let dirtyDates = new Set();
@@ -378,13 +419,21 @@ function metrics(di) {
   const dvmH = day.dvms.reduce((s,a) => s + (+a.workHours||0), 0);
   const supH = day.staff.reduce((s,a) => s + (+a.workHours||0), 0);
   const vis  = day.visitCount || 0;
+  const rev  = day.expectedRevenue || 0;
+  const supComp = day.staff.reduce((sum, a) => {
+    const person = S.staff.find(p => p.id === a.personId);
+    const rate = person ? (+person.hourlyRate || 0) : 0;
+    return sum + (+a.workHours||0) * rate;
+  }, 0);
   const vRatio = dvmH > 0 ? vis  / dvmH : null;
   const sRatio = dvmH > 0 ? supH / dvmH : null;
-  return { dvmH, supH, vis, vRatio, sRatio, hasData: dvmH > 0 };
+  const scPct  = rev  > 0 ? (supComp / rev) * 100 : null;
+  return { dvmH, supH, vis, rev, supComp, vRatio, sRatio, scPct, hasData: dvmH > 0 };
 }
 
-function ratioClass(ratio, target) {
+function ratioClass(ratio, target, lowerIsBetter) {
   if (ratio === null || !target) return 'ratio-na';
+  if (lowerIsBetter) return ratio <= target ? 'ratio-green' : 'ratio-red';
   return ratio >= target ? 'ratio-green' : 'ratio-red';
 }
 
@@ -394,7 +443,7 @@ async function loadPeople() {
   const res  = await fetch(`/api/locations/${locationId}/people`);
   const data = await res.json();
   S.dvms  = data.dvms.map(d  => ({ id:String(d.id), name:d.name, sub:d.specialty,   color:d.color }));
-  S.staff = data.staff.map(s => ({ id:String(s.id), name:s.name, sub:s.role_title,  color:s.color }));
+  S.staff = data.staff.map(s => ({ id:String(s.id), name:s.name, sub:s.role_title,  color:s.color, hourlyRate: s.hourly_rate || 0 }));
 }
 
 async function loadSchedule() {
@@ -406,10 +455,12 @@ async function loadSchedule() {
       dvms:  day.dvms.map(a  => ({ id:'a'+(S.uid++), personId:String(a.person_id), workHours:a.hours, breakHours:a.break_hours||0, timeOffHours:a.time_off_hours||0 })),
       staff: day.staff.map(a => ({ id:'a'+(S.uid++), personId:String(a.person_id), workHours:a.hours, breakHours:a.break_hours||0, timeOffHours:a.time_off_hours||0 })),
       visitCount: day.visitCount || 0,
+      expectedRevenue: day.expectedRevenue || 0,
     };
   });
-  S.targets.visitsPerDVMHour  = data.settings.visits_per_dvm_hour;
-  S.targets.supportPerDVMHour = data.settings.support_per_dvm_hour;
+  S.targets.visitsPerDVMHour    = data.settings.visits_per_dvm_hour;
+  S.targets.supportPerDVMHour   = data.settings.support_per_dvm_hour;
+  S.targets.supportCompPctTarget = data.settings.support_comp_pct_target || 30;
 }
 
 // ── SAVE ───────────────────────────────────────────────────
@@ -428,6 +479,7 @@ async function saveDay(date) {
       dvms:  day.dvms.map(a  => ({ personId:a.personId, hours:a.workHours, breakHours:a.breakHours,  timeOffHours:a.timeOffHours })),
       staff: day.staff.map(a => ({ personId:a.personId, hours:a.workHours, breakHours:a.breakHours,  timeOffHours:a.timeOffHours })),
       visitCount: day.visitCount || 0,
+      expectedRevenue: day.expectedRevenue || 0,
     }),
   });
 }
@@ -435,7 +487,7 @@ async function saveSettings() {
   if (isReadOnly) return;
   await fetch(`/api/locations/${locationId}/settings`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ visitsPerDVMHour:S.targets.visitsPerDVMHour, supportPerDVMHour:S.targets.supportPerDVMHour }),
+    body: JSON.stringify({ visitsPerDVMHour:S.targets.visitsPerDVMHour, supportPerDVMHour:S.targets.supportPerDVMHour, supportCompPctTarget:S.targets.supportCompPctTarget }),
   });
 }
 
@@ -443,18 +495,20 @@ async function saveSettings() {
 
 function renderAll() {
   document.getElementById('weekLabel').textContent = weekLabel();
-  document.getElementById('tgtVisits').value  = S.targets.visitsPerDVMHour;
-  document.getElementById('tgtSupport').value = S.targets.supportPerDVMHour;
+  document.getElementById('tgtVisits').value     = S.targets.visitsPerDVMHour;
+  document.getElementById('tgtSupport').value    = S.targets.supportPerDVMHour;
+  document.getElementById('tgtSupCompPct').value = S.targets.supportCompPctTarget;
   renderGrid();
 }
 
 function renderGrid() {
   const dates = weekDates();
-  const COLS  = 1 + 7;
+  const COLS  = 2 + 7;
 
   // ─── Header row ───
   let html = `<table class="sched-table"><thead><tr>
-    <th class="name-th"><div class="name-th-inner">Staff</div></th>`;
+    <th class="name-th"><div class="name-th-inner">Staff</div></th>
+    <th class="rate-th"><div class="rate-th-inner">$/hr</div></th>`;
   dates.forEach((d, i) => {
     const date = new Date(d + 'T00:00:00');
     html += `<th class="day-th${isToday(i)?' today-th':''}">
@@ -470,15 +524,28 @@ function renderGrid() {
 
   // ─── Visit count row ───
   html += `<tr class="visit-row">
-    <td class="name-cell visit-name-cell" style="border-right:1px solid #E2E8F0"><strong>Patient Visits</strong></td>`;
+    <td class="name-cell visit-name-cell" style="border-right:1px solid #E2E8F0">
+      <div class="visit-name-cell-inner">
+        <div class="visit-label-group"><strong>Patient Visits</strong></div>
+        <div class="visit-label-group" style="margin-top:6px"><strong style="color:#0F766E">Exp. Revenue</strong></div>
+      </div>
+    </td>
+    <td class="rate-cell" style="background:#FAFBFC;border-bottom:2px solid #E2E8F0"></td>`;
   dates.forEach((d, i) => {
     const cnt = (S.schedule[d] || {}).visitCount || 0;
+    const rev = (S.schedule[d] || {}).expectedRevenue || 0;
     const todayCls = isToday(i) ? ' today-cell' : '';
     html += `<td class="visit-day-cell${todayCls}">`;
-    html += isReadOnly
-      ? `<span class="visit-count-ro">${cnt}</span>`
-      : `<input type="number" class="visit-in" value="${cnt}" min="0" step="1"
-           onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()">`;
+    if (isReadOnly) {
+      html += `<span class="visit-count-ro">${cnt}</span>
+               <span class="visit-count-ro" style="font-size:13px;color:#0F766E">$${rev.toLocaleString()}</span>`;
+    } else {
+      html += `<input type="number" class="visit-in" value="${cnt}" min="0" step="1"
+                 onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()">
+               <input type="number" class="rev-in" value="${rev}" min="0" step="100"
+                 onchange="updateExpectedRevenue(${i},this.value)" onclick="event.stopPropagation()" placeholder="0">
+               <span class="visit-rev-lbl">revenue</span>`;
+    }
     html += `</td>`;
   });
   html += `</tr>`;
@@ -496,14 +563,17 @@ function renderGrid() {
   // ─── Metrics section ───
   html += `<tr class="section-hdr-row"><td colspan="${COLS}" class="section-hdr-cell metrics-section-hdr">Daily Metrics</td></tr>`;
   html += `<tr class="metrics-row">
-    <td class="name-cell metrics-name-cell" style="border-right:1px solid #E2E8F0">Totals &amp; Ratios</td>`;
+    <td class="name-cell metrics-name-cell" style="border-right:1px solid #E2E8F0">Totals &amp; Ratios</td>
+    <td class="rate-cell" style="background:#FAFBFC"></td>`;
   dates.forEach((d, i) => {
     const m    = metrics(i);
     const todayCls = isToday(i) ? ' today-cell' : '';
-    const vStr = m.vRatio !== null ? m.vRatio.toFixed(2) : '—';
-    const sStr = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
-    const vCls = ratioClass(m.vRatio, S.targets.visitsPerDVMHour);
-    const sCls = ratioClass(m.sRatio, S.targets.supportPerDVMHour);
+    const vStr  = m.vRatio !== null ? m.vRatio.toFixed(2) : '—';
+    const sStr  = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
+    const scStr = m.scPct  !== null ? m.scPct.toFixed(1) + '%' : '—';
+    const vCls  = ratioClass(m.vRatio, S.targets.visitsPerDVMHour, false);
+    const sCls  = ratioClass(m.sRatio, S.targets.supportPerDVMHour, false);
+    const scCls = ratioClass(m.scPct,  S.targets.supportCompPctTarget, true);
     html += `<td class="metrics-day-cell${todayCls}">`;
     if (!m.hasData && !m.vis) {
       html += `<span style="color:#CBD5E1;font-size:11px;">—</span>`;
@@ -524,6 +594,10 @@ function renderGrid() {
           <span class="mc-ratio-val">${sStr}</span>
           <span class="mc-ratio-lbl">Sup/DVM-hr</span>
         </div>
+        <div class="mc-ratio ${scCls}" title="Target: ≤${S.targets.supportCompPctTarget}% of revenue">
+          <span class="mc-ratio-val">${scStr}</span>
+          <span class="mc-ratio-lbl">Sup Comp %</span>
+        </div>
       </div>`;
     }
     html += `</td>`;
@@ -534,20 +608,33 @@ function renderGrid() {
 }
 
 function personRow(person, type, dates) {
-  let shifts=0, totalWork=0, totalBreak=0, totalOff=0;
+  let totalWork=0, totalBreak=0, totalOff=0;
   dates.forEach(d => {
     const day = S.schedule[d]; if (!day) return;
     const a   = (type==='dvm' ? day.dvms : day.staff).find(x => x.personId === person.id);
-    if (a) { shifts++; totalWork += +a.workHours||0; totalBreak += +a.breakHours||0; totalOff += +a.timeOffHours||0; }
+    if (a) { totalWork += +a.workHours||0; totalBreak += +a.breakHours||0; totalOff += +a.timeOffHours||0; }
   });
 
-  const statParts = [`${shifts} shift${shifts!==1?'s':''}`];
-  if (totalWork  > 0) statParts.push(`${totalWork}h work`);
-  if (totalBreak > 0) statParts.push(`${totalBreak}h break`);
+  const statParts = [];
+  if (totalWork  > 0) statParts.push(`${totalWork}h reg`);
+  if (totalBreak > 0) statParts.push(`${totalBreak}h OT`);
   if (totalOff   > 0) statParts.push(`${totalOff}h off`);
 
   const rmPersonBtn = isReadOnly ? '' :
     `<button class="rm-person-btn" onclick="deletePersonFromPool('${type}','${person.id}',event)" title="Remove">&times;</button>`;
+
+  let rateCell = '';
+  if (type === 'staff') {
+    const rateVal = person.hourlyRate || 0;
+    rateCell = `<td class="rate-cell">` + (isReadOnly
+      ? `<span class="hr-val" style="font-size:13px">$${rateVal}</span>`
+      : `<input type="number" class="rate-in" value="${rateVal}" min="0" step="0.5"
+           onchange="updateHourlyRate('${person.id}',this.value)"
+           onclick="event.stopPropagation()" title="Hourly pay rate">
+         <span class="rate-lbl">$/hr</span>`) + `</td>`;
+  } else {
+    rateCell = `<td class="rate-cell" style="background:#FAFBFC"></td>`;
+  }
 
   let row = `<tr class="person-row" data-pid="${person.id}" data-ptype="${type}">
     <td class="name-cell">
@@ -560,7 +647,8 @@ function personRow(person, type, dates) {
         </div>
       </div>
       ${rmPersonBtn}
-    </td>`;
+    </td>
+    ${rateCell}`;
 
   dates.forEach((d, i) => {
     const day = S.schedule[d] || { dvms:[], staff:[], visitCount:0 };
@@ -587,16 +675,16 @@ function personRow(person, type, dates) {
                      onchange="updateHourField('${type}','${a.id}',${i},'workHours',this.value)"
                      onclick="event.stopPropagation()" title="Working hours">`
               }
-              <span class="hr-lbl">Work</span>
+              <span class="hr-lbl">Reg</span>
             </div>
             <div class="hr-grp">
               ${isReadOnly
                 ? `<span class="hr-val">${a.breakHours}</span>`
                 : `<input type="number" class="hr-in" value="${a.breakHours}" min="0" max="24" step="0.5"
                      onchange="updateHourField('${type}','${a.id}',${i},'breakHours',this.value)"
-                     onclick="event.stopPropagation()" title="Break hours">`
+                     onclick="event.stopPropagation()" title="Overtime hours">`
               }
-              <span class="hr-lbl">Break</span>
+              <span class="hr-lbl">OT</span>
             </div>
             <div class="hr-grp">
               ${isReadOnly
@@ -654,19 +742,17 @@ function updateVisitCount(di, val) {
 }
 
 function refreshMetricsCell(di) {
-  // Re-render just the metrics row cell for this day to avoid full re-render
-  // Easier: just re-render full grid (small tables are fast)
-  // But to avoid losing focus on inputs, we do a targeted update
   const m      = metrics(di);
   const vStr   = m.vRatio !== null ? m.vRatio.toFixed(2) : '—';
   const sStr   = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
-  const vCls   = ratioClass(m.vRatio, S.targets.visitsPerDVMHour);
-  const sCls   = ratioClass(m.sRatio, S.targets.supportPerDVMHour);
-  // Find the metrics row cell by position (it's the last tbody row, cell di+1)
+  const scStr  = m.scPct  !== null ? m.scPct.toFixed(1) + '%' : '—';
+  const vCls   = ratioClass(m.vRatio, S.targets.visitsPerDVMHour, false);
+  const sCls   = ratioClass(m.sRatio, S.targets.supportPerDVMHour, false);
+  const scCls  = ratioClass(m.scPct,  S.targets.supportCompPctTarget, true);
   const metricsRow = document.querySelector('.metrics-row');
   if (!metricsRow) return;
   const cells = metricsRow.querySelectorAll('td');
-  const cell  = cells[di + 1]; // +1 because first cell is name
+  const cell  = cells[di + 2]; // +2: name cell + rate cell
   if (!cell) return;
   if (!m.hasData && !m.vis) {
     cell.innerHTML = `<span style="color:#CBD5E1;font-size:11px;">—</span>`;
@@ -687,6 +773,10 @@ function refreshMetricsCell(di) {
         <span class="mc-ratio-val">${sStr}</span>
         <span class="mc-ratio-lbl">Sup/DVM-hr</span>
       </div>
+      <div class="mc-ratio ${scCls}" title="Target: ≤${S.targets.supportCompPctTarget}% of revenue">
+        <span class="mc-ratio-val">${scStr}</span>
+        <span class="mc-ratio-lbl">Sup Comp %</span>
+      </div>
     </div>`;
   }
 }
@@ -696,17 +786,17 @@ function refreshPersonStats(type, personId) {
   const row = document.querySelector(`tr[data-pid="${personId}"][data-ptype="${type}"]`);
   if (!row) return;
   const dates = weekDates();
-  let shifts=0, totalWork=0, totalBreak=0, totalOff=0;
+  let totalWork=0, totalBreak=0, totalOff=0;
   dates.forEach(d => {
     const day = S.schedule[d]; if (!day) return;
     const a   = (type==='dvm' ? day.dvms : day.staff).find(x => x.personId === personId);
-    if (a) { shifts++; totalWork += +a.workHours||0; totalBreak += +a.breakHours||0; totalOff += +a.timeOffHours||0; }
+    if (a) { totalWork += +a.workHours||0; totalBreak += +a.breakHours||0; totalOff += +a.timeOffHours||0; }
   });
   const statsEl = row.querySelector('.p-stats');
   if (!statsEl) return;
-  const parts = [`${shifts} shift${shifts!==1?'s':''}`];
-  if (totalWork  > 0) parts.push(`${totalWork}h work`);
-  if (totalBreak > 0) parts.push(`${totalBreak}h break`);
+  const parts = [];
+  if (totalWork  > 0) parts.push(`${totalWork}h reg`);
+  if (totalBreak > 0) parts.push(`${totalBreak}h OT`);
   if (totalOff   > 0) parts.push(`${totalOff}h off`);
   statsEl.innerHTML = parts.join(' &middot; ');
 }
@@ -730,6 +820,27 @@ async function deletePersonFromPool(type, id, e) {
 function setTarget(key, val) {
   S.targets[key] = Math.max(0.1, parseFloat(val)||1);
   saveSettings(); renderGrid();
+}
+
+function updateHourlyRate(staffId, val) {
+  if (isReadOnly) return;
+  const rate = Math.max(0, parseFloat(val) || 0);
+  const person = S.staff.find(p => p.id === staffId);
+  if (person) person.hourlyRate = rate;
+  fetch(`/api/locations/${locationId}/staff/${staffId}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ hourlyRate: rate }),
+  });
+  // Refresh metrics for all days since comp changed
+  for (let i = 0; i < 7; i++) refreshMetricsCell(i);
+}
+
+function updateExpectedRevenue(di, val) {
+  const date = dayKey(di);
+  if (!S.schedule[date]) S.schedule[date] = { dvms:[], staff:[], visitCount:0, expectedRevenue:0 };
+  S.schedule[date].expectedRevenue = Math.max(0, parseFloat(val) || 0);
+  markDirty(date); flushSave();
+  refreshMetricsCell(di);
 }
 
 async function changeWeek(delta) {
