@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetScheduler Pro</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #F4F6F9; color: #1E293B;
+  height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+}
+
+/* ── TOP NAV ── */
+.top-nav {
+  height: 40px; background: #0A1F33;
+  display: flex; align-items: center; padding: 0 14px; gap: 6px; flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.nav-link { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 5px; transition: all 0.15s; }
+.nav-link:hover { color: white; background: rgba(255,255,255,0.1); }
+.nav-link.active { color: white; background: rgba(255,255,255,0.15); }
+.nav-sep { color: rgba(255,255,255,0.2); font-size: 11px; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.nav-user { color: rgba(255,255,255,0.55); font-size: 11.5px; }
+.nav-logout { color: rgba(255,255,255,0.5); background: none; border: 1px solid rgba(255,255,255,0.18); border-radius: 5px; padding: 3px 9px; font-size: 11.5px; cursor: pointer; transition: all 0.15s; }
+.nav-logout:hover { color: white; border-color: rgba(255,255,255,0.4); }
+
+/* ── HEADER ── */
+header {
+  height: 54px; background: #0F2D4A; color: white;
+  display: flex; align-items: center; padding: 0 16px; gap: 12px;
+  flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+header h1 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.location-badge { font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.15); padding: 3px 9px; border-radius: 10px; color: rgba(255,255,255,0.85); }
+.loc-selector { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 7px; padding: 4px 8px; font-size: 12px; cursor: pointer; max-width: 200px; }
+.loc-selector:focus { outline: none; }
+.loc-selector option { color: #1E293B; background: white; }
+.week-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.week-nav button { background: rgba(255,255,255,0.13); border: none; color: white; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.week-nav button:hover { background: rgba(255,255,255,0.25); }
+.week-nav .today-btn { width: auto; padding: 0 10px; font-size: 12px; font-weight: 600; }
+.week-label { font-size: 13px; font-weight: 500; min-width: 190px; text-align: center; color: rgba(255,255,255,0.9); }
+
+/* ── OUTER LAYOUT ── */
+.layout { display: flex; flex: 1; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 185px; background: white; border-right: 1px solid #DDE3EC;
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+}
+.sidebar-body { flex: 1; overflow-y: auto; padding: 12px; }
+.add-person-btn {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  padding: 8px 10px; margin-bottom: 8px; border-radius: 7px;
+  border: 1px solid #DDE3EC; background: none; font-size: 12px; font-weight: 600;
+  color: #475569; cursor: pointer; transition: all 0.15s;
+}
+.add-person-btn:hover { background: #F1F5F9; border-color: #94A3B8; color: #1E293B; }
+.add-person-btn:disabled { color: #CBD5E1; border-color: #E8EEF5; cursor: not-allowed; }
+
+.settings-panel { padding: 10px 12px 14px; border-top: 1px solid #E8EEF5; background: #F8FAFB; flex-shrink: 0; }
+.settings-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #64748B; margin-bottom: 9px; }
+.setting-row { margin-bottom: 9px; }
+.setting-label { font-size: 11px; color: #64748B; margin-bottom: 3px; display: block; }
+.setting-input-row { display: flex; align-items: center; gap: 6px; }
+.setting-input { width: 58px; padding: 4px 7px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; font-weight: 600; color: #1E293B; background: white; }
+.setting-input:focus { outline: none; border-color: #3B82F6; }
+.setting-unit { font-size: 10px; color: #64748B; }
+
+/* ── MAIN GRID AREA ── */
+.schedule-main { flex: 1; overflow: auto; }
+.sched-wrap { padding: 0; }
+table.sched-table { border-collapse: collapse; width: 100%; }
+
+/* ── HEADER ROW ── */
+.sched-table thead th {
+  position: sticky; top: 0; z-index: 10;
+  padding: 0; text-align: center; font-weight: 700;
+  background: #1E2A38; color: white; border-right: 1px solid rgba(255,255,255,0.08);
+  white-space: nowrap;
+}
+.sched-table thead th.name-th {
+  width: 200px; min-width: 200px; text-align: left;
+  background: #0F2D4A; border-right: 1px solid rgba(255,255,255,0.12);
+}
+.name-th-inner { padding: 12px 14px; font-size: 10.5px; color: rgba(255,255,255,0.5); letter-spacing: 0.6px; text-transform: uppercase; }
+.day-th-inner { padding: 10px 8px 8px; }
+.dth-top { display: flex; align-items: baseline; justify-content: center; gap: 5px; }
+.dth-name { font-size: 13px; font-weight: 700; }
+.dth-date { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.55); }
+.sched-table thead th.today-th { background: #1D4ED8; }
+
+/* ── VISIT COUNT ROW ── */
+.visit-row td { background: #FAFBFC; border-bottom: 2px solid #E2E8F0; }
+.visit-row td.today-cell { background: #EEF5FF !important; }
+.visit-name-cell {
+  padding: 10px 14px; font-size: 12px; font-weight: 600; color: #475569;
+  text-align: center; white-space: nowrap; border-right: 1px solid #E2E8F0;
+  letter-spacing: 0.2px;
+}
+.visit-day-cell { text-align: center; padding: 8px 6px; border-right: 1px solid #E8EEF5; }
+.visit-in {
+  width: 72px; padding: 6px 4px; border: 1.5px solid #CBD5E1; border-radius: 7px;
+  font-size: 22px; font-weight: 800; text-align: center; color: #1E293B;
+  background: white; display: block; margin: 0 auto;
+}
+.visit-in:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.visit-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
+.visit-count-ro { font-size: 22px; font-weight: 800; color: #1E293B; }
+
+/* ── SECTION HEADERS ── */
+.section-hdr-row td {
+  padding: 6px 14px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; color: #64748B;
+  background: #F1F4F8; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;
+}
+.section-add-btn {
+  float: right; background: none; border: 1px solid #CBD5E1; border-radius: 4px;
+  padding: 1px 8px; font-size: 10px; font-weight: 600; cursor: pointer;
+  color: #64748B; transition: all 0.15s;
+}
+.section-add-btn:hover { background: #E2E8F0; color: #1E293B; border-color: #94A3B8; }
+.section-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── PERSON ROWS ── */
+.person-row td { border-bottom: 1px solid #EEF1F6; background: white; }
+.person-row:hover td { background: #FAFBFD; }
+
+/* Name cell */
+.name-cell {
+  padding: 0; min-width: 200px; max-width: 200px; width: 200px;
+  border-right: 1px solid #E2E8F0; vertical-align: middle; position: relative;
+  background: white;
+}
+.name-cell-inner { padding: 10px 10px 10px 14px; display: flex; align-items: flex-start; gap: 8px; }
+.p-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.p-info { flex: 1; min-width: 0; }
+.p-name { font-size: 12.5px; font-weight: 700; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-role { font-size: 10.5px; color: #64748B; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-stats { font-size: 10px; color: #94A3B8; margin-top: 4px; line-height: 1.4; }
+.rm-person-btn {
+  position: absolute; right: 5px; top: 5px; background: none; border: none;
+  font-size: 14px; color: #CBD5E1; cursor: pointer; line-height: 1; padding: 2px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.name-cell:hover .rm-person-btn { opacity: 1; }
+.rm-person-btn:hover { color: #EF4444; }
+
+/* Day cells */
+.day-cell {
+  min-width: 140px; vertical-align: middle;
+  border-right: 1px solid #EEF1F6; padding: 0; position: relative; background: white;
+}
+.day-cell.today-cell { background: #F0F6FF !important; border-right-color: #DBEAFE; }
+
+/* Empty (unscheduled) cell */
+.empty-cell { text-align: center; background: #FAFBFC !important; }
+.empty-cell.today-cell { background: #F0F6FF !important; }
+.add-day-btn {
+  width: 100%; min-height: 62px; background: none; border: none;
+  font-size: 18px; color: #D1D5DB; cursor: pointer; transition: all 0.15s;
+}
+.add-day-btn:hover { color: #3B82F6; background: #EEF5FF; }
+
+/* Scheduled cell */
+.sched-cell { padding: 8px 6px; }
+.cell-inner-grid { display: flex; align-items: center; gap: 2px; justify-content: center; }
+.hr-inputs { display: flex; gap: 7px; justify-content: center; }
+.hr-grp { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.hr-in {
+  width: 44px; padding: 5px 3px; border: 1px solid #D1D5DB;
+  border-radius: 6px; font-size: 15px; font-weight: 700;
+  text-align: center; color: #1E293B; background: white;
+}
+.hr-in:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.hr-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
+.hr-lbl { font-size: 9px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+.hr-val { font-size: 15px; font-weight: 700; color: #1E293B; min-width: 30px; text-align: center; display: inline-block; }
+.rm-day-btn {
+  background: none; border: none; font-size: 14px; color: #D1D5DB; cursor: pointer;
+  padding: 3px; line-height: 1; flex-shrink: 0; margin-left: 2px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.sched-cell:hover .rm-day-btn { opacity: 1; }
+.rm-day-btn:hover { color: #EF4444; }
+
+/* ── RATE COLUMN ── */
+.rate-th {
+  width: 72px; min-width: 72px; background: #1E2A38 !important;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.rate-th-inner { padding: 10px 4px 8px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.5px; }
+.rate-cell {
+  width: 72px; min-width: 72px; max-width: 72px;
+  border-right: 1px solid #E2E8F0; vertical-align: middle;
+  text-align: center; padding: 6px 4px; background: white;
+}
+.person-row td.rate-cell { border-bottom: 1px solid #EEF1F6; }
+.rate-in {
+  width: 58px; padding: 4px 3px; border: 1px solid #D1D5DB;
+  border-radius: 6px; font-size: 13px; font-weight: 700;
+  text-align: center; color: #1E293B; background: white; display: block; margin: 0 auto;
+}
+.rate-in:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.rate-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
+.rate-lbl { font-size: 9px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; display: block; margin-top: 2px; }
+
+/* ── EXPECTED REVENUE ── */
+.rev-in {
+  width: 72px; padding: 3px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
+  font-size: 13px; font-weight: 700; text-align: center; color: #0F766E;
+  background: white; display: block; margin: 4px auto 0;
+}
+.rev-in:focus { outline: none; border-color: #0D9488; box-shadow: 0 0 0 2px rgba(13,148,136,0.15); }
+.rev-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
+.visit-rev-lbl { font-size: 9px; color: #0F766E; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; display: block; }
+.visit-name-cell-inner { display: flex; flex-direction: column; gap: 0; }
+.visit-label-group { line-height: 1.3; }
+
+/* ── METRICS SECTION ── */
+.metrics-section-hdr { background: #F1F4F8; }
+
+.metrics-row td { background: #FAFBFC; border-bottom: 1px solid #EEF1F6; }
+.metrics-row td.today-cell { background: #EEF5FF !important; }
+.metrics-name-cell {
+  padding: 8px 14px; font-size: 10px; font-weight: 700; color: #64748B;
+  text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid #E2E8F0;
+  vertical-align: middle;
+}
+.metrics-day-cell { text-align: center; padding: 7px 6px; border-right: 1px solid #EEF1F6; vertical-align: middle; }
+
+.mc-totals {
+  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+  font-size: 11px; color: #475569; margin-bottom: 6px;
+}
+.mc-t { font-weight: 700; color: #1E293B; }
+
+.mc-ratios { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+.mc-ratio {
+  font-size: 11px; font-weight: 700; padding: 3px 7px;
+  border-radius: 5px; white-space: nowrap; display: flex; flex-direction: column;
+  align-items: center; gap: 1px;
+}
+.mc-ratio-val { font-size: 13px; font-weight: 800; line-height: 1; }
+.mc-ratio-lbl { font-size: 8.5px; font-weight: 600; opacity: 0.8; letter-spacing: 0.3px; }
+.ratio-green { background: #DCFCE7; color: #15803D; }
+.ratio-red   { background: #FEE2E2; color: #B91C1C; }
+.ratio-na    { background: #F1F5F9; color: #94A3B8; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(3px);
+}
+.modal-box { background: white; border-radius: 12px; padding: 22px 24px 20px; width: 310px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+.modal-box h2 { font-size: 15px; font-weight: 700; margin-bottom: 15px; color: #0F2D4A; }
+.form-group { margin-bottom: 11px; }
+.form-label { display: block; font-size: 11.5px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+.form-input { width: 100%; padding: 7px 10px; border: 1px solid #D1D5DB; border-radius: 7px; font-size: 13px; color: #111827; background: white; }
+.form-input:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.btn { padding: 8px 14px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: #2563EB; color: white; flex: 1; }
+.btn-primary:hover { background: #1D4ED8; }
+.btn-secondary { background: #F1F5F9; color: #475569; }
+.btn-secondary:hover { background: #E2E8F0; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="/scheduler.html" class="nav-link active">Schedule</a>
+  <span class="nav-sep" id="corpRollupSep" style="display:none">|</span>
+  <a href="/corporate.html" class="nav-link" id="corpRollupLink" style="display:none">Corporate Rollup</a>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="nav-logout" onclick="logout()">Sign Out</button>
+  </div>
+</nav>
+
+<header>
+  <h1>🐾 VetScheduler Pro</h1>
+  <span class="location-badge" id="locationBadge" style="display:none"></span>
+  <select class="loc-selector" id="locationSelector" style="display:none" onchange="switchLocation(this.value)"></select>
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">&#8249;</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button onclick="changeWeek(1)">&#8250;</button>
+    <button class="today-btn" onclick="changeWeek(0)">Today</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-body">
+      <button class="add-person-btn" id="addDvmBtn" onclick="openAddModal('dvm')">+ Add DVM</button>
+      <button class="add-person-btn" id="addStaffBtn" onclick="openAddModal('staff')">+ Add Support Staff</button>
+    </div>
+    <div class="settings-panel">
+      <div class="settings-title">&#9881; Targets</div>
+      <div class="setting-row">
+        <label class="setting-label">Visits per DVM hour</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtVisits" min="0.1" max="20" step="0.1"
+                 onchange="setTarget('visitsPerDVMHour', this.value)">
+          <span class="setting-unit">vis/hr</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label class="setting-label">Support hours per DVM hour</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtSupport" min="0.1" max="10" step="0.1"
+                 onchange="setTarget('supportPerDVMHour', this.value)">
+          <span class="setting-unit">hrs/hr</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label class="setting-label">Support comp % of revenue target</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtSupCompPct" min="1" max="100" step="1"
+                 onchange="setTarget('supportCompPctTarget', this.value)">
+          <span class="setting-unit">%</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="schedule-main">
+    <div class="sched-wrap" id="schedWrap"></div>
+  </main>
+</div>
+
+<!-- ADD PERSON MODAL -->
+<div class="modal-overlay" id="addModal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <h2 id="addModalTitle">Add Person</h2>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="pName" placeholder="Full name">
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="pSubLabel">Specialty</label>
+      <input type="text" class="form-input" id="pSub" placeholder="">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="commitAddPerson()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const DAY_SHORT  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DVM_PALETTE   = ['#3B82F6','#7C3AED','#DB2777','#F59E0B','#0D9488','#EF4444','#0EA5E9','#F97316'];
+const STAFF_PALETTE = ['#16A34A','#0891B2','#7C3AED','#D97706','#BE123C','#0369A1','#15803D','#9333EA'];
+
+let user        = null;
+let locationId  = null;
+let allLocations = [];
+let isReadOnly  = false;
+let S = {
+  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5, supportCompPctTarget: 30 },
+  dvms: [], staff: [], schedule: {}, weekOffset: 0, uid: 1,
+};
+let dirtyDates = new Set();
+
+// ── AUTH ───────────────────────────────────────────────────
+
+async function checkAuth() {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) { window.location.href = '/login.html'; return null; }
+  return res.json();
+}
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+// ── DATE HELPERS ───────────────────────────────────────────
+
+function getMonday(ref) {
+  const d = new Date(ref), day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1)); d.setHours(0,0,0,0); return d;
+}
+function weekStart() { const m = getMonday(new Date()); m.setDate(m.getDate() + S.weekOffset * 7); return m; }
+function weekStartStr() { return weekStart().toISOString().split('T')[0]; }
+function weekDates() {
+  const s = weekStart();
+  return Array.from({length:7}, (_,i) => { const d = new Date(s); d.setDate(s.getDate()+i); return d.toISOString().split('T')[0]; });
+}
+function dayKey(di)  { const d = new Date(weekStart()); d.setDate(d.getDate()+di); return d.toISOString().split('T')[0]; }
+function isToday(di) { const d = new Date(weekStart()); d.setDate(d.getDate()+di); return d.toDateString() === new Date().toDateString(); }
+function fmtDate(d)  { return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function weekLabel() {
+  const s = weekStart(), e = new Date(s); e.setDate(e.getDate()+6);
+  return `${fmtDate(s)} \u2013 ${fmtDate(e)}, ${e.getFullYear()}`;
+}
+function daySchedule(di) {
+  const k = dayKey(di);
+  if (!S.schedule[k]) S.schedule[k] = { dvms:[], staff:[], visitCount:0 };
+  return S.schedule[k];
+}
+
+// ── METRICS ────────────────────────────────────────────────
+
+function metrics(di) {
+  const day  = daySchedule(di);
+  const dvmH = day.dvms.reduce((s,a) => s + (+a.workHours||0), 0);
+  const supH = day.staff.reduce((s,a) => s + (+a.workHours||0), 0);
+  const vis  = day.visitCount || 0;
+  const rev  = day.expectedRevenue || 0;
+  const supComp = day.staff.reduce((sum, a) => {
+    const person = S.staff.find(p => p.id === a.personId);
+    const rate = person ? (+person.hourlyRate || 0) : 0;
+    return sum + (+a.workHours||0) * rate;
+  }, 0);
+  const vRatio = dvmH > 0 ? vis  / dvmH : null;
+  const sRatio = dvmH > 0 ? supH / dvmH : null;
+  const scPct  = rev  > 0 ? (supComp / rev) * 100 : null;
+  return { dvmH, supH, vis, rev, supComp, vRatio, sRatio, scPct, hasData: dvmH > 0 };
+}
+
+function ratioClass(ratio, target, lowerIsBetter) {
+  if (ratio === null || !target) return 'ratio-na';
+  if (lowerIsBetter) return ratio <= target ? 'ratio-green' : 'ratio-red';
+  return ratio >= target ? 'ratio-green' : 'ratio-red';
+}
+
+// ── LOAD DATA ──────────────────────────────────────────────
+
+async function loadPeople() {
+  const res  = await fetch(`/api/locations/${locationId}/people`);
+  const data = await res.json();
+  S.dvms  = data.dvms.map(d  => ({ id:String(d.id), name:d.name, sub:d.specialty,   color:d.color }));
+  S.staff = data.staff.map(s => ({ id:String(s.id), name:s.name, sub:s.role_title,  color:s.color, hourlyRate: s.hourly_rate || 0 }));
+}
+
+async function loadSchedule() {
+  const res  = await fetch(`/api/locations/${locationId}/schedule?week=${weekStartStr()}`);
+  const data = await res.json();
+  S.schedule = {};
+  Object.entries(data.schedule).forEach(([date, day]) => {
+    S.schedule[date] = {
+      dvms:  day.dvms.map(a  => ({ id:'a'+(S.uid++), personId:String(a.person_id), workHours:a.hours, breakHours:a.break_hours||0, timeOffHours:a.time_off_hours||0 })),
+      staff: day.staff.map(a => ({ id:'a'+(S.uid++), personId:String(a.person_id), workHours:a.hours, breakHours:a.break_hours||0, timeOffHours:a.time_off_hours||0 })),
+      visitCount: day.visitCount || 0,
+      expectedRevenue: day.expectedRevenue || 0,
+    };
+  });
+  S.targets.visitsPerDVMHour    = data.settings.visits_per_dvm_hour;
+  S.targets.supportPerDVMHour   = data.settings.support_per_dvm_hour;
+  S.targets.supportCompPctTarget = data.settings.support_comp_pct_target || 30;
+}
+
+// ── SAVE ───────────────────────────────────────────────────
+
+function markDirty(date) { if (!isReadOnly) dirtyDates.add(date); }
+async function flushSave() {
+  if (isReadOnly || dirtyDates.size === 0) return;
+  const dates = [...dirtyDates]; dirtyDates.clear();
+  await Promise.all(dates.map(saveDay));
+}
+async function saveDay(date) {
+  const day = S.schedule[date] || { dvms:[], staff:[], visitCount:0 };
+  await fetch(`/api/locations/${locationId}/schedule/${date}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      dvms:  day.dvms.map(a  => ({ personId:a.personId, hours:a.workHours, breakHours:a.breakHours,  timeOffHours:a.timeOffHours })),
+      staff: day.staff.map(a => ({ personId:a.personId, hours:a.workHours, breakHours:a.breakHours,  timeOffHours:a.timeOffHours })),
+      visitCount: day.visitCount || 0,
+      expectedRevenue: day.expectedRevenue || 0,
+    }),
+  });
+}
+async function saveSettings() {
+  if (isReadOnly) return;
+  await fetch(`/api/locations/${locationId}/settings`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ visitsPerDVMHour:S.targets.visitsPerDVMHour, supportPerDVMHour:S.targets.supportPerDVMHour, supportCompPctTarget:S.targets.supportCompPctTarget }),
+  });
+}
+
+// ── RENDER ─────────────────────────────────────────────────
+
+function renderAll() {
+  document.getElementById('weekLabel').textContent = weekLabel();
+  document.getElementById('tgtVisits').value     = S.targets.visitsPerDVMHour;
+  document.getElementById('tgtSupport').value    = S.targets.supportPerDVMHour;
+  document.getElementById('tgtSupCompPct').value = S.targets.supportCompPctTarget;
+  renderGrid();
+}
+
+function renderGrid() {
+  const dates = weekDates();
+  const COLS  = 2 + 7;
+
+  // ─── Header row ───
+  let html = `<table class="sched-table"><thead><tr>
+    <th class="name-th"><div class="name-th-inner">Staff</div></th>
+    <th class="rate-th"><div class="rate-th-inner">$/hr</div></th>`;
+  dates.forEach((d, i) => {
+    const date = new Date(d + 'T00:00:00');
+    html += `<th class="day-th${isToday(i)?' today-th':''}">
+      <div class="day-th-inner">
+        <div class="dth-top">
+          <span class="dth-name">${DAY_SHORT[i]}</span>
+          <span class="dth-date">${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+        </div>
+      </div>
+    </th>`;
+  });
+  html += `</tr></thead><tbody>`;
+
+  // ─── Visit count row ───
+  html += `<tr class="visit-row">
+    <td class="name-cell visit-name-cell" style="border-right:1px solid #E2E8F0">
+      <div class="visit-name-cell-inner">
+        <div class="visit-label-group"><strong>Patient Visits</strong></div>
+        <div class="visit-label-group" style="margin-top:6px"><strong style="color:#0F766E">Exp. Revenue</strong></div>
+      </div>
+    </td>
+    <td class="rate-cell" style="background:#FAFBFC;border-bottom:2px solid #E2E8F0"></td>`;
+  dates.forEach((d, i) => {
+    const cnt = (S.schedule[d] || {}).visitCount || 0;
+    const rev = (S.schedule[d] || {}).expectedRevenue || 0;
+    const todayCls = isToday(i) ? ' today-cell' : '';
+    html += `<td class="visit-day-cell${todayCls}">`;
+    if (isReadOnly) {
+      html += `<span class="visit-count-ro">${cnt}</span>
+               <span class="visit-count-ro" style="font-size:13px;color:#0F766E">$${rev.toLocaleString()}</span>`;
+    } else {
+      html += `<input type="number" class="visit-in" value="${cnt}" min="0" step="1"
+                 onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()">
+               <input type="number" class="rev-in" value="${rev}" min="0" step="100"
+                 onchange="updateExpectedRevenue(${i},this.value)" onclick="event.stopPropagation()" placeholder="0">
+               <span class="visit-rev-lbl">revenue</span>`;
+    }
+    html += `</td>`;
+  });
+  html += `</tr>`;
+
+  // ─── DVMs section ───
+  const addDvmBtn = isReadOnly ? '' : `<button class="section-add-btn" onclick="openAddModal('dvm')">+ Add DVM</button>`;
+  html += `<tr class="section-hdr-row"><td colspan="${COLS}" class="section-hdr-cell">${addDvmBtn}DVMs</td></tr>`;
+  S.dvms.forEach(p => { html += personRow(p, 'dvm', dates); });
+
+  // ─── Support Staff section ───
+  const addStaffBtn = isReadOnly ? '' : `<button class="section-add-btn" onclick="openAddModal('staff')">+ Add Staff</button>`;
+  html += `<tr class="section-hdr-row"><td colspan="${COLS}" class="section-hdr-cell">${addStaffBtn}Support Staff</td></tr>`;
+  S.staff.forEach(p => { html += personRow(p, 'staff', dates); });
+
+  // ─── Metrics section ───
+  html += `<tr class="section-hdr-row"><td colspan="${COLS}" class="section-hdr-cell metrics-section-hdr">Daily Metrics</td></tr>`;
+  html += `<tr class="metrics-row">
+    <td class="name-cell metrics-name-cell" style="border-right:1px solid #E2E8F0">Totals &amp; Ratios</td>
+    <td class="rate-cell" style="background:#FAFBFC"></td>`;
+  dates.forEach((d, i) => {
+    const m    = metrics(i);
+    const todayCls = isToday(i) ? ' today-cell' : '';
+    const vStr  = m.vRatio !== null ? m.vRatio.toFixed(2) : '—';
+    const sStr  = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
+    const scStr = m.scPct  !== null ? m.scPct.toFixed(1) + '%' : '—';
+    const vCls  = ratioClass(m.vRatio, S.targets.visitsPerDVMHour, false);
+    const sCls  = ratioClass(m.sRatio, S.targets.supportPerDVMHour, false);
+    const scCls = ratioClass(m.scPct,  S.targets.supportCompPctTarget, true);
+    html += `<td class="metrics-day-cell${todayCls}">`;
+    if (!m.hasData && !m.vis) {
+      html += `<span style="color:#CBD5E1;font-size:11px;">—</span>`;
+    } else {
+      html += `<div class="mc-totals">
+        <span><span class="mc-t">${m.dvmH}</span>h DVM</span>
+        <span style="color:#CBD5E1">&middot;</span>
+        <span><span class="mc-t">${m.supH}</span>h Sup</span>
+        <span style="color:#CBD5E1">&middot;</span>
+        <span><span class="mc-t">${m.vis}</span> visits</span>
+      </div>
+      <div class="mc-ratios">
+        <div class="mc-ratio ${vCls}" title="Target: ${S.targets.visitsPerDVMHour} visits/DVM-hr">
+          <span class="mc-ratio-val">${vStr}</span>
+          <span class="mc-ratio-lbl">Vis/DVM-hr</span>
+        </div>
+        <div class="mc-ratio ${sCls}" title="Target: ${S.targets.supportPerDVMHour} sup-hrs/DVM-hr">
+          <span class="mc-ratio-val">${sStr}</span>
+          <span class="mc-ratio-lbl">Sup/DVM-hr</span>
+        </div>
+        <div class="mc-ratio ${scCls}" title="Target: ≤${S.targets.supportCompPctTarget}% of revenue">
+          <span class="mc-ratio-val">${scStr}</span>
+          <span class="mc-ratio-lbl">Sup Comp %</span>
+        </div>
+      </div>`;
+    }
+    html += `</td>`;
+  });
+  html += `</tr></tbody></table>`;
+
+  document.getElementById('schedWrap').innerHTML = html;
+}
+
+function personRow(person, type, dates) {
+  let totalWork=0, totalBreak=0, totalOff=0;
+  dates.forEach(d => {
+    const day = S.schedule[d]; if (!day) return;
+    const a   = (type==='dvm' ? day.dvms : day.staff).find(x => x.personId === person.id);
+    if (a) { totalWork += +a.workHours||0; totalBreak += +a.breakHours||0; totalOff += +a.timeOffHours||0; }
+  });
+
+  const statParts = [];
+  if (totalWork  > 0) statParts.push(`${totalWork}h reg`);
+  if (totalBreak > 0) statParts.push(`${totalBreak}h OT`);
+  if (totalOff   > 0) statParts.push(`${totalOff}h off`);
+
+  const rmPersonBtn = isReadOnly ? '' :
+    `<button class="rm-person-btn" onclick="deletePersonFromPool('${type}','${person.id}',event)" title="Remove">&times;</button>`;
+
+  let rateCell = '';
+  if (type === 'staff') {
+    const rateVal = person.hourlyRate || 0;
+    rateCell = `<td class="rate-cell">` + (isReadOnly
+      ? `<span class="hr-val" style="font-size:13px">$${rateVal}</span>`
+      : `<input type="number" class="rate-in" value="${rateVal}" min="0" step="0.5"
+           onchange="updateHourlyRate('${person.id}',this.value)"
+           onclick="event.stopPropagation()" title="Hourly pay rate">
+         <span class="rate-lbl">$/hr</span>`) + `</td>`;
+  } else {
+    rateCell = `<td class="rate-cell" style="background:#FAFBFC"></td>`;
+  }
+
+  let row = `<tr class="person-row" data-pid="${person.id}" data-ptype="${type}">
+    <td class="name-cell">
+      <div class="name-cell-inner">
+        <span class="p-dot" style="background:${person.color}"></span>
+        <div class="p-info">
+          <div class="p-name">${esc(person.name)}</div>
+          <div class="p-role">${esc(person.sub)}</div>
+          <div class="p-stats">${statParts.join(' &middot; ')}</div>
+        </div>
+      </div>
+      ${rmPersonBtn}
+    </td>
+    ${rateCell}`;
+
+  dates.forEach((d, i) => {
+    const day = S.schedule[d] || { dvms:[], staff:[], visitCount:0 };
+    const arr = type==='dvm' ? day.dvms : day.staff;
+    const a   = arr.find(x => x.personId === person.id);
+    const todayCls = isToday(i) ? ' today-cell' : '';
+
+    if (!a) {
+      row += `<td class="day-cell empty-cell${todayCls}">`;
+      if (!isReadOnly) {
+        row += `<button class="add-day-btn" onclick="addPersonToDay('${person.id}','${type}',${i})" title="Add to ${DAY_SHORT[i]}">+</button>`;
+      }
+      row += `</td>`;
+    } else {
+      const rmDayBtn = isReadOnly ? '' :
+        `<button class="rm-day-btn" onclick="removeFromDay('${type}','${a.id}',${i})" title="Remove">&times;</button>`;
+      row += `<td class="day-cell sched-cell${todayCls}">
+        <div class="cell-inner-grid">
+          <div class="hr-inputs">
+            <div class="hr-grp">
+              ${isReadOnly
+                ? `<span class="hr-val">${a.workHours}</span>`
+                : `<input type="number" class="hr-in" value="${a.workHours}" min="0" max="24" step="0.5"
+                     onchange="updateHourField('${type}','${a.id}',${i},'workHours',this.value)"
+                     onclick="event.stopPropagation()" title="Working hours">`
+              }
+              <span class="hr-lbl">Reg</span>
+            </div>
+            <div class="hr-grp">
+              ${isReadOnly
+                ? `<span class="hr-val">${a.breakHours}</span>`
+                : `<input type="number" class="hr-in" value="${a.breakHours}" min="0" max="24" step="0.5"
+                     onchange="updateHourField('${type}','${a.id}',${i},'breakHours',this.value)"
+                     onclick="event.stopPropagation()" title="Overtime hours">`
+              }
+              <span class="hr-lbl">OT</span>
+            </div>
+            <div class="hr-grp">
+              ${isReadOnly
+                ? `<span class="hr-val">${a.timeOffHours}</span>`
+                : `<input type="number" class="hr-in" value="${a.timeOffHours}" min="0" max="24" step="0.5"
+                     onchange="updateHourField('${type}','${a.id}',${i},'timeOffHours',this.value)"
+                     onclick="event.stopPropagation()" title="Time off hours">`
+              }
+              <span class="hr-lbl">Off</span>
+            </div>
+          </div>
+          ${rmDayBtn}
+        </div>
+      </td>`;
+    }
+  });
+
+  row += `</tr>`;
+  return row;
+}
+
+// ── ACTIONS ────────────────────────────────────────────────
+
+function addPersonToDay(personId, type, di) {
+  if (isReadOnly) return;
+  const day = daySchedule(di), arr = type==='dvm' ? day.dvms : day.staff;
+  if (arr.some(a => a.personId === personId)) return;
+  arr.push({ id:'a'+(S.uid++), personId, workHours:8, breakHours:0, timeOffHours:0 });
+  markDirty(dayKey(di)); flushSave(); renderGrid();
+}
+
+function removeFromDay(type, assignId, di) {
+  if (isReadOnly) return;
+  const day = daySchedule(di);
+  if (type==='dvm') day.dvms  = day.dvms.filter(a  => a.id !== assignId);
+  else              day.staff = day.staff.filter(a => a.id !== assignId);
+  markDirty(dayKey(di)); flushSave(); renderGrid();
+}
+
+function updateHourField(type, assignId, di, field, val) {
+  const v   = Math.max(0, Math.min(24, parseFloat(val)||0));
+  const day = daySchedule(di), arr = type==='dvm' ? day.dvms : day.staff;
+  const a   = arr.find(x => x.id === assignId);
+  if (a) a[field] = v;
+  markDirty(dayKey(di)); flushSave();
+  refreshMetricsCell(di); refreshPersonStats(type, a ? a.personId : null);
+}
+
+function updateVisitCount(di, val) {
+  const date = dayKey(di);
+  if (!S.schedule[date]) S.schedule[date] = { dvms:[], staff:[], visitCount:0 };
+  S.schedule[date].visitCount = Math.max(0, parseInt(val)||0);
+  markDirty(date); flushSave();
+  refreshMetricsCell(di);
+}
+
+function refreshMetricsCell(di) {
+  const m      = metrics(di);
+  const vStr   = m.vRatio !== null ? m.vRatio.toFixed(2) : '—';
+  const sStr   = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
+  const scStr  = m.scPct  !== null ? m.scPct.toFixed(1) + '%' : '—';
+  const vCls   = ratioClass(m.vRatio, S.targets.visitsPerDVMHour, false);
+  const sCls   = ratioClass(m.sRatio, S.targets.supportPerDVMHour, false);
+  const scCls  = ratioClass(m.scPct,  S.targets.supportCompPctTarget, true);
+  const metricsRow = document.querySelector('.metrics-row');
+  if (!metricsRow) return;
+  const cells = metricsRow.querySelectorAll('td');
+  const cell  = cells[di + 2]; // +2: name cell + rate cell
+  if (!cell) return;
+  if (!m.hasData && !m.vis) {
+    cell.innerHTML = `<span style="color:#CBD5E1;font-size:11px;">—</span>`;
+  } else {
+    cell.innerHTML = `<div class="mc-totals">
+      <span><span class="mc-t">${m.dvmH}</span>h DVM</span>
+      <span style="color:#CBD5E1">&middot;</span>
+      <span><span class="mc-t">${m.supH}</span>h Sup</span>
+      <span style="color:#CBD5E1">&middot;</span>
+      <span><span class="mc-t">${m.vis}</span> visits</span>
+    </div>
+    <div class="mc-ratios">
+      <div class="mc-ratio ${vCls}" title="Target: ${S.targets.visitsPerDVMHour}">
+        <span class="mc-ratio-val">${vStr}</span>
+        <span class="mc-ratio-lbl">Vis/DVM-hr</span>
+      </div>
+      <div class="mc-ratio ${sCls}" title="Target: ${S.targets.supportPerDVMHour}">
+        <span class="mc-ratio-val">${sStr}</span>
+        <span class="mc-ratio-lbl">Sup/DVM-hr</span>
+      </div>
+      <div class="mc-ratio ${scCls}" title="Target: ≤${S.targets.supportCompPctTarget}% of revenue">
+        <span class="mc-ratio-val">${scStr}</span>
+        <span class="mc-ratio-lbl">Sup Comp %</span>
+      </div>
+    </div>`;
+  }
+}
+
+function refreshPersonStats(type, personId) {
+  if (!personId) return;
+  const row = document.querySelector(`tr[data-pid="${personId}"][data-ptype="${type}"]`);
+  if (!row) return;
+  const dates = weekDates();
+  let totalWork=0, totalBreak=0, totalOff=0;
+  dates.forEach(d => {
+    const day = S.schedule[d]; if (!day) return;
+    const a   = (type==='dvm' ? day.dvms : day.staff).find(x => x.personId === personId);
+    if (a) { totalWork += +a.workHours||0; totalBreak += +a.breakHours||0; totalOff += +a.timeOffHours||0; }
+  });
+  const statsEl = row.querySelector('.p-stats');
+  if (!statsEl) return;
+  const parts = [];
+  if (totalWork  > 0) parts.push(`${totalWork}h reg`);
+  if (totalBreak > 0) parts.push(`${totalBreak}h OT`);
+  if (totalOff   > 0) parts.push(`${totalOff}h off`);
+  statsEl.innerHTML = parts.join(' &middot; ');
+}
+
+async function deletePersonFromPool(type, id, e) {
+  e.stopPropagation();
+  const url = type==='dvm'
+    ? `/api/locations/${locationId}/dvms/${id}`
+    : `/api/locations/${locationId}/staff/${id}`;
+  await fetch(url, { method:'DELETE' });
+  if (type==='dvm') {
+    S.dvms = S.dvms.filter(d => d.id !== String(id));
+    Object.values(S.schedule).forEach(day => { day.dvms = day.dvms.filter(a => a.personId !== String(id)); });
+  } else {
+    S.staff = S.staff.filter(s => s.id !== String(id));
+    Object.values(S.schedule).forEach(day => { day.staff = day.staff.filter(a => a.personId !== String(id)); });
+  }
+  renderGrid();
+}
+
+function setTarget(key, val) {
+  S.targets[key] = Math.max(0.1, parseFloat(val)||1);
+  saveSettings(); renderGrid();
+}
+
+function updateHourlyRate(staffId, val) {
+  if (isReadOnly) return;
+  const rate = Math.max(0, parseFloat(val) || 0);
+  const person = S.staff.find(p => p.id === staffId);
+  if (person) person.hourlyRate = rate;
+  fetch(`/api/locations/${locationId}/staff/${staffId}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ hourlyRate: rate }),
+  });
+  // Refresh metrics for all days since comp changed
+  for (let i = 0; i < 7; i++) refreshMetricsCell(i);
+}
+
+function updateExpectedRevenue(di, val) {
+  const date = dayKey(di);
+  if (!S.schedule[date]) S.schedule[date] = { dvms:[], staff:[], visitCount:0, expectedRevenue:0 };
+  S.schedule[date].expectedRevenue = Math.max(0, parseFloat(val) || 0);
+  markDirty(date); flushSave();
+  refreshMetricsCell(di);
+}
+
+async function changeWeek(delta) {
+  S.weekOffset = delta===0 ? 0 : S.weekOffset + delta;
+  await loadSchedule(); renderAll();
+}
+
+// ── ADD PERSON MODAL ───────────────────────────────────────
+
+let addPersonType = null;
+
+function openAddModal(type) {
+  addPersonType = type;
+  document.getElementById('pName').value = '';
+  document.getElementById('pSub').value  = '';
+  document.getElementById('addModalTitle').textContent = type==='dvm' ? '+ Add DVM' : '+ Add Support Staff';
+  document.getElementById('pSubLabel').textContent     = type==='dvm' ? 'Specialty' : 'Role';
+  document.getElementById('pSub').placeholder         = type==='dvm' ? 'e.g. General Practice' : 'e.g. Vet Tech';
+  document.getElementById('addModal').style.display   = 'flex';
+  setTimeout(() => document.getElementById('pName').focus(), 50);
+}
+
+async function commitAddPerson() {
+  const name = document.getElementById('pName').value.trim(); if (!name) return;
+  const sub  = document.getElementById('pSub').value.trim();
+  const url  = addPersonType==='dvm' ? `/api/locations/${locationId}/dvms` : `/api/locations/${locationId}/staff`;
+  const body = addPersonType==='dvm'
+    ? { name, specialty:  sub||'General Practice', color:DVM_PALETTE[S.dvms.length % DVM_PALETTE.length] }
+    : { name, role_title: sub||'Support Staff',    color:STAFF_PALETTE[S.staff.length % STAFF_PALETTE.length] };
+  const res    = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  const person = await res.json();
+  if (addPersonType==='dvm') S.dvms.push({ id:String(person.id), name:person.name, sub:person.specialty,  color:person.color });
+  else                       S.staff.push({ id:String(person.id), name:person.name, sub:person.role_title, color:person.color });
+  closeModal(); renderGrid();
+}
+
+function closeModal() { document.getElementById('addModal').style.display = 'none'; }
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') closeModal();
+  if (e.key==='Enter' && document.getElementById('addModal').style.display!=='none') commitAddPerson();
+});
+
+// ── LOCATION SWITCHER ─────────────────────────────────────
+
+async function switchLocation(locId) {
+  locationId = locId;
+  const url = new URL(window.location.href);
+  url.searchParams.set('loc', locId);
+  window.history.replaceState({}, '', url);
+  await loadPeople(); await loadSchedule(); renderAll();
+}
+
+// ── UTILITY ────────────────────────────────────────────────
+
+function hexAlpha(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ───────────────────────────────────────────────────
+
+async function init() {
+  user = await checkAuth(); if (!user) return;
+  document.getElementById('navUser').textContent = user.username;
+
+  if (user.role==='corporate') {
+    document.getElementById('corpRollupSep').style.display  = '';
+    document.getElementById('corpRollupLink').style.display = '';
+    const res    = await fetch('/api/locations');
+    allLocations = await res.json();
+    const params = new URLSearchParams(window.location.search);
+    locationId   = params.get('loc') || String(allLocations[0]?.id);
+    isReadOnly   = true;
+    const sel    = document.getElementById('locationSelector');
+    sel.style.display = '';
+    allLocations.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id; opt.textContent = loc.name;
+      opt.selected = String(loc.id) === String(locationId);
+      sel.appendChild(opt);
+    });
+    document.getElementById('addDvmBtn').disabled   = true;
+    document.getElementById('addStaffBtn').disabled = true;
+  } else {
+    locationId = user.locationId;
+    const res  = await fetch('/api/locations');
+    const locs = await res.json();
+    const loc  = locs.find(l => String(l.id) === String(locationId));
+    const badge = document.getElementById('locationBadge');
+    badge.textContent = loc?.name || ''; badge.style.display = '';
+    if (user.role==='staff') {
+      isReadOnly = true;
+      document.getElementById('addDvmBtn').disabled   = true;
+      document.getElementById('addStaffBtn').disabled = true;
+    }
+  }
+
+  await loadPeople(); await loadSchedule(); renderAll();
+}
+
+init();
+</script>
+</body>
+</html>

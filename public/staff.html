@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetScheduler Pro — My Schedule</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #EEF2F7; color: #1E293B;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+
+/* ── TOP NAV ── */
+.top-nav {
+  height: 40px; background: #0A1F33;
+  display: flex; align-items: center; padding: 0 14px; gap: 6px; flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.nav-link {
+  color: rgba(255,255,255,0.6); text-decoration: none;
+  font-size: 12px; font-weight: 500; padding: 5px 10px;
+  border-radius: 5px; transition: all 0.15s;
+}
+.nav-link:hover { color: white; background: rgba(255,255,255,0.1); }
+.nav-link.active { color: white; background: rgba(255,255,255,0.15); }
+.nav-sep { color: rgba(255,255,255,0.2); font-size: 11px; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.nav-user { color: rgba(255,255,255,0.55); font-size: 11.5px; }
+.nav-logout {
+  color: rgba(255,255,255,0.5); background: none; border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 5px; padding: 3px 9px; font-size: 11.5px; cursor: pointer; transition: all 0.15s;
+}
+.nav-logout:hover { color: white; border-color: rgba(255,255,255,0.4); }
+
+/* ── HEADER ── */
+header {
+  height: 54px; background: #0F2D4A; color: white;
+  display: flex; align-items: center; padding: 0 20px; gap: 12px;
+  flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+header h1 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.person-badge {
+  font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.15);
+  padding: 3px 10px; border-radius: 10px; color: rgba(255,255,255,0.85);
+}
+.week-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.week-nav button {
+  background: rgba(255,255,255,0.13); border: none; color: white;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 15px; display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+}
+.week-nav button:hover { background: rgba(255,255,255,0.25); }
+.week-nav .today-btn { width: auto; padding: 0 10px; font-size: 12px; font-weight: 600; }
+.week-label { font-size: 13px; font-weight: 500; min-width: 190px; text-align: center; color: rgba(255,255,255,0.9); }
+
+/* ── MAIN ── */
+.main { flex: 1; padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
+
+/* ── WEEK SUMMARY ── */
+.week-summary {
+  display: flex; gap: 10px; margin-bottom: 20px;
+}
+.ws-card {
+  flex: 1; background: white; border-radius: 10px; padding: 12px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.ws-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #64748B; margin-bottom: 4px; }
+.ws-value { font-size: 22px; font-weight: 800; color: #0F2D4A; }
+.ws-sub { font-size: 10.5px; color: #94A3B8; margin-top: 2px; }
+
+/* ── DAY CARDS ── */
+.day-card {
+  background: white; border-radius: 12px; margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden;
+  border: 2px solid transparent; transition: border-color 0.15s;
+}
+.day-card.is-today { border-color: #3B82F6; }
+.day-card.is-off { opacity: 0.6; }
+
+.day-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid #F1F5F9;
+  background: #FAFBFC;
+}
+.day-name-wrap { min-width: 90px; }
+.day-name { font-size: 14px; font-weight: 700; color: #0F2D4A; }
+.day-date-sub { font-size: 10.5px; color: #94A3B8; margin-top: 1px; }
+.today-pill { background: #DBEAFE; color: #1D4ED8; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 8px; margin-left: 6px; }
+.scheduled-info { display: flex; gap: 8px; align-items: center; flex: 1; }
+.sched-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #EEF3FF; color: #3730A3; border-radius: 6px;
+  padding: 3px 8px; font-size: 11px; font-weight: 600;
+}
+.sched-chip.green { background: #ECFDF5; color: #065F46; }
+.not-scheduled { font-size: 11.5px; color: #CBD5E1; font-style: italic; }
+
+.day-body { padding: 14px 16px; }
+
+/* Time log form */
+.time-off-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.toggle-wrap input[type="checkbox"] { width: 16px; height: 16px; accent-color: #EF4444; cursor: pointer; }
+.toggle-label { font-size: 12.5px; font-weight: 600; color: #1E293B; user-select: none; }
+.time-off-note { font-size: 11px; color: #94A3B8; }
+
+.hours-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.field-group label { display: block; font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 4px; }
+.field-group input {
+  width: 100%; padding: 7px 10px; border: 1px solid #D1D5DB;
+  border-radius: 7px; font-size: 13px; font-weight: 600; color: #0F2D4A;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field-group input:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.field-group input:disabled { background: #F8FAFC; color: #94A3B8; cursor: not-allowed; }
+
+.notes-group { margin-bottom: 12px; }
+.notes-group label { display: block; font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 4px; }
+.notes-group textarea {
+  width: 100%; padding: 7px 10px; border: 1px solid #D1D5DB; border-radius: 7px;
+  font-size: 12.5px; color: #0F2D4A; resize: none; min-height: 56px;
+  font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.notes-group textarea:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.notes-group textarea:disabled { background: #F8FAFC; color: #94A3B8; cursor: not-allowed; }
+
+.save-row { display: flex; align-items: center; gap: 10px; }
+.btn-save {
+  padding: 7px 18px; background: #2563EB; color: white; border: none;
+  border-radius: 7px; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background 0.15s;
+}
+.btn-save:hover { background: #1D4ED8; }
+.btn-save:disabled { background: #93C5FD; cursor: not-allowed; }
+.save-status { font-size: 11.5px; color: #22C55E; display: none; }
+.save-status.error { color: #EF4444; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 48px 20px; color: #94A3B8; }
+.empty-state h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: #64748B; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #C4CDD8; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="/staff.html" class="nav-link active">My Schedule</a>
+  <span class="nav-sep">|</span>
+  <a href="/scheduler.html" class="nav-link">Location Schedule</a>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="nav-logout" onclick="logout()">Sign Out</button>
+  </div>
+</nav>
+
+<header>
+  <h1>&#128197; My Schedule</h1>
+  <span class="person-badge" id="personBadge">Loading…</span>
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">&#8249;</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button onclick="changeWeek(1)">&#8250;</button>
+    <button class="today-btn" onclick="changeWeek(0)">Today</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="week-summary" id="weekSummary"></div>
+  <div id="dayCards"></div>
+</div>
+
+<script>
+'use strict';
+
+let user       = null;
+let personName = '';
+let personSub  = '';
+let weekOffset = 0;
+
+// Schedule data (from the location schedule API)
+let scheduleData = {}; // date -> { scheduled: bool, scheduledHours: number }
+// Time log data (self-reported)
+let timeLogs = {};     // date -> log object or null
+
+const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+// ── AUTH ──────────────────────────────────────────────────
+
+async function checkAuth() {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) { window.location.href = '/login.html'; return null; }
+  return res.json();
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+// ── DATE HELPERS ──────────────────────────────────────────
+
+function getMonday(ref) {
+  const d = new Date(ref);
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function weekStart() {
+  const m = getMonday(new Date());
+  m.setDate(m.getDate() + weekOffset * 7);
+  return m;
+}
+function weekStartStr() { return weekStart().toISOString().split('T')[0]; }
+function weekDates() {
+  const s = weekStart();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(s); d.setDate(s.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+}
+function fmtDate(isoStr) {
+  const d = new Date(isoStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function fmtWeekLabel() {
+  const s = weekStart(), e = new Date(s);
+  e.setDate(e.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${fmt(s)} \u2013 ${fmt(e)}, ${e.getFullYear()}`;
+}
+function isToday(isoStr) {
+  return new Date(isoStr + 'T00:00:00').toDateString() === new Date().toDateString();
+}
+
+// ── LOAD DATA ─────────────────────────────────────────────
+
+async function loadData() {
+  const week  = weekStartStr();
+  const dates = weekDates();
+
+  // Load location schedule to see when this person is assigned
+  const schedRes  = await fetch(`/api/locations/${user.locationId}/schedule?week=${week}`);
+  const schedData = await schedRes.json();
+
+  scheduleData = {};
+  dates.forEach(date => {
+    const day  = schedData.schedule[date];
+    const type = user.personType;
+    const arr  = type === 'dvm' ? day?.dvms : day?.staff;
+    const assignment = arr?.find(a => String(a.person_id) === String(user.personId));
+    scheduleData[date] = {
+      scheduled:      !!assignment,
+      scheduledHours: assignment?.hours || 0,
+    };
+  });
+
+  // Load time logs
+  const logRes = await fetch(`/api/timelog?personId=${user.personId}&personType=${user.personType}&week=${week}`);
+  timeLogs = await logRes.json();
+}
+
+// ── RENDER ────────────────────────────────────────────────
+
+function render() {
+  document.getElementById('weekLabel').textContent = fmtWeekLabel();
+  renderSummary();
+  renderDayCards();
+}
+
+function renderSummary() {
+  const dates = weekDates();
+  let totalScheduled = 0, totalWorked = 0, totalBreaks = 0, daysOff = 0;
+
+  dates.forEach(date => {
+    const log = timeLogs[date];
+    if (scheduleData[date]?.scheduled) totalScheduled += scheduleData[date].scheduledHours;
+    if (log) {
+      if (log.is_time_off) { daysOff++; }
+      else {
+        if (log.hours_worked != null) totalWorked += log.hours_worked;
+        totalBreaks += log.break_hours || 0;
+      }
+    }
+  });
+
+  document.getElementById('weekSummary').innerHTML = `
+    <div class="ws-card">
+      <div class="ws-label">Scheduled Hours</div>
+      <div class="ws-value">${totalScheduled}</div>
+      <div class="ws-sub">This week per plan</div>
+    </div>
+    <div class="ws-card">
+      <div class="ws-label">Hours Worked</div>
+      <div class="ws-value">${totalWorked || '—'}</div>
+      <div class="ws-sub">Logged so far</div>
+    </div>
+    <div class="ws-card">
+      <div class="ws-label">Break Hours</div>
+      <div class="ws-value">${totalBreaks || '—'}</div>
+      <div class="ws-sub">Total breaks logged</div>
+    </div>
+    <div class="ws-card">
+      <div class="ws-label">Days Off</div>
+      <div class="ws-value">${daysOff || '—'}</div>
+      <div class="ws-sub">Logged time off</div>
+    </div>`;
+}
+
+function renderDayCards() {
+  const dates = weekDates();
+  const html  = dates.map((date, i) => renderDayCard(date, i)).join('');
+  document.getElementById('dayCards').innerHTML = html;
+}
+
+function renderDayCard(date, di) {
+  const sched  = scheduleData[date] || { scheduled: false, scheduledHours: 0 };
+  const log    = timeLogs[date];
+  const today  = isToday(date);
+  const isOff  = log?.is_time_off;
+
+  const todayPill    = today ? `<span class="today-pill">Today</span>` : '';
+  const scheduledEl  = sched.scheduled
+    ? `<span class="sched-chip">&#128197; Scheduled ${sched.scheduledHours}h</span>`
+    : `<span class="not-scheduled">Not scheduled this day</span>`;
+
+  // Pre-fill values from saved log
+  const hoursWorked = log?.hours_worked ?? (sched.scheduled ? sched.scheduledHours : '');
+  const breakHours  = log?.break_hours  ?? 0;
+  const notes       = log?.notes        ?? '';
+  const timeOffChecked = isOff ? 'checked' : '';
+
+  const disabledAttr = isOff ? 'disabled' : '';
+
+  return `
+  <div class="day-card ${today ? 'is-today' : ''} ${isOff ? 'is-off' : ''}" id="card-${date}">
+    <div class="day-head">
+      <div class="day-name-wrap">
+        <div class="day-name">${DAY_NAMES[di]}${todayPill}</div>
+        <div class="day-date-sub">${fmtDate(date)}</div>
+      </div>
+      <div class="scheduled-info">${scheduledEl}</div>
+    </div>
+    <div class="day-body">
+      <div class="time-off-row">
+        <label class="toggle-wrap" onclick="toggleTimeOff('${date}', this)">
+          <input type="checkbox" id="off-${date}" ${timeOffChecked}
+            onchange="onTimeOffChange('${date}', this.checked)">
+          <span class="toggle-label">&#9940; Time Off / Absent</span>
+        </label>
+        <span class="time-off-note" id="off-note-${date}" style="${isOff ? '' : 'display:none'}">
+          Hours fields are disabled while time off is checked.
+        </span>
+      </div>
+
+      <div class="hours-grid">
+        <div class="field-group">
+          <label for="worked-${date}">Hours Worked</label>
+          <input type="number" id="worked-${date}" min="0" max="24" step="0.5"
+            value="${hoursWorked}" placeholder="e.g. 8" ${disabledAttr}>
+        </div>
+        <div class="field-group">
+          <label for="breaks-${date}">Break Hours</label>
+          <input type="number" id="breaks-${date}" min="0" max="8" step="0.25"
+            value="${breakHours}" placeholder="e.g. 0.5" ${disabledAttr}>
+        </div>
+      </div>
+
+      <div class="notes-group">
+        <label for="notes-${date}">Notes (optional)</label>
+        <textarea id="notes-${date}" placeholder="e.g. Covered lunch, left early, procedure notes…" ${disabledAttr}>${esc(notes)}</textarea>
+      </div>
+
+      <div class="save-row">
+        <button class="btn-save" onclick="saveDay('${date}', this)">Save</button>
+        <span class="save-status" id="status-${date}"></span>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────
+
+function onTimeOffChange(date, checked) {
+  const workedEl = document.getElementById('worked-' + date);
+  const breaksEl = document.getElementById('breaks-' + date);
+  const notesEl  = document.getElementById('notes-'  + date);
+  const noteMsg  = document.getElementById('off-note-' + date);
+  const card     = document.getElementById('card-' + date);
+
+  workedEl.disabled = checked;
+  breaksEl.disabled = checked;
+  notesEl.disabled  = checked;
+  noteMsg.style.display = checked ? '' : 'none';
+  card.classList.toggle('is-off', checked);
+}
+
+async function saveDay(date, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  const statusEl = document.getElementById('status-' + date);
+
+  const isTimeOff  = document.getElementById('off-'    + date)?.checked || false;
+  const hoursWorked = isTimeOff ? null : (parseFloat(document.getElementById('worked-' + date)?.value) || null);
+  const breakHours  = isTimeOff ? 0    : (parseFloat(document.getElementById('breaks-' + date)?.value) || 0);
+  const notes       = document.getElementById('notes-' + date)?.value?.trim() || '';
+
+  try {
+    const res = await fetch('/api/timelog', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, hoursWorked, breakHours, isTimeOff, notes }),
+    });
+
+    if (res.ok) {
+      // Update local cache
+      timeLogs[date] = { date, hours_worked: hoursWorked, break_hours: breakHours, is_time_off: isTimeOff ? 1 : 0, notes };
+      statusEl.textContent   = '&#10003; Saved';
+      statusEl.className     = 'save-status';
+      statusEl.style.display = '';
+      renderSummary();
+      setTimeout(() => { statusEl.style.display = 'none'; }, 2500);
+    } else {
+      throw new Error('Save failed');
+    }
+  } catch (err) {
+    statusEl.textContent   = 'Save failed — try again';
+    statusEl.className     = 'save-status error';
+    statusEl.style.display = '';
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Save';
+}
+
+// ── WEEK NAV ──────────────────────────────────────────────
+
+async function changeWeek(delta) {
+  weekOffset = delta === 0 ? 0 : weekOffset + delta;
+  await loadData();
+  render();
+}
+
+// ── UTILITY ───────────────────────────────────────────────
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────
+
+async function init() {
+  user = await checkAuth();
+  if (!user) return;
+
+  if (user.role !== 'staff') {
+    window.location.href = '/';
+    return;
+  }
+
+  document.getElementById('navUser').textContent = user.username;
+
+  // Get person name from location people
+  try {
+    const res  = await fetch(`/api/locations/${user.locationId}/people`);
+    const data = await res.json();
+    const people = user.personType === 'dvm' ? data.dvms : data.staff;
+    const person = people.find(p => String(p.id) === String(user.personId));
+    if (person) {
+      personName = person.name;
+      personSub  = user.personType === 'dvm' ? person.specialty : person.role_title;
+      document.getElementById('personBadge').textContent = `${personName} \u00B7 ${personSub}`;
+    }
+  } catch (_) {}
+
+  await loadData();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
