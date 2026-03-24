@@ -103,10 +103,11 @@ table.sched-table { border-collapse: collapse; width: 100%; }
   letter-spacing: 0.2px;
 }
 .visit-day-cell { text-align: center; padding: 5px 6px; border-right: 1px solid #E8EEF5; }
-.visit-row-item { display: flex; align-items: center; gap: 5px; justify-content: center; margin: 2px 0; }
+.visit-inputs-wrap { display: inline-flex; flex-direction: column; gap: 3px; }
+.visit-row-item { display: flex; align-items: center; gap: 5px; }
 .visit-row-lbl { font-size: 10.5px; font-weight: 600; color: #64748B; white-space: nowrap; }
 .visit-in {
-  width: 60px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 7px;
+  width: 80px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 7px;
   font-size: 14px; font-weight: 800; text-align: center; color: #1E293B;
   background: white; display: block;
 }
@@ -213,7 +214,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 
 /* ── EXPECTED REVENUE ── */
 .rev-in {
-  width: 60px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
+  width: 80px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
   font-size: 14px; font-weight: 700; text-align: center; color: #0F766E;
   background: white; display: block;
 }
@@ -537,14 +538,22 @@ function renderGrid() {
     const rev = (S.schedule[d] || {}).expectedRevenue || 0;
     const todayCls = isToday(i) ? ' today-cell' : '';
     html += `<td class="visit-day-cell${todayCls}">`;
+    const revFmt = rev > 0 ? '$' + Math.round(rev).toLocaleString() : '';
     if (isReadOnly) {
-      html += `<div class="visit-row-item"><span class="visit-count-ro">${cnt}</span><span class="visit-row-lbl">Visits</span></div>
-               <div class="visit-row-item"><span class="visit-count-ro" style="font-size:14px;color:#0F766E">$${Math.round(rev).toLocaleString()}</span><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>`;
+      html += `<div class="visit-inputs-wrap">
+        <div class="visit-row-item"><span class="visit-count-ro">${cnt}</span><span class="visit-row-lbl">Visits</span></div>
+        <div class="visit-row-item"><span class="visit-count-ro" style="font-size:14px;color:#0F766E">${revFmt || '—'}</span><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>
+      </div>`;
     } else {
-      html += `<div class="visit-row-item"><input type="number" class="visit-in" value="${cnt}" min="0" step="1"
-                 onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()"><span class="visit-row-lbl">Visits</span></div>
-               <div class="visit-row-item"><input type="number" class="rev-in" value="${Math.round(rev)}" min="0" step="100"
-                 onchange="updateExpectedRevenue(${i},this.value)" onclick="event.stopPropagation()" placeholder="0"><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>`;
+      html += `<div class="visit-inputs-wrap">
+        <div class="visit-row-item"><input type="number" class="visit-in" value="${cnt}" min="0" step="1"
+          onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()"><span class="visit-row-lbl">Visits</span></div>
+        <div class="visit-row-item"><input type="text" inputmode="numeric" class="rev-in" value="${revFmt}"
+          data-raw="${Math.round(rev)}"
+          onfocus="this.value=this.dataset.raw||'';this.select()"
+          onblur="formatRevInput(this,${i})"
+          onclick="event.stopPropagation()" placeholder="$0"><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>
+      </div>`;
     }
     html += `</td>`;
   });
@@ -839,6 +848,13 @@ function updateExpectedRevenue(di, val) {
   S.schedule[date].expectedRevenue = Math.max(0, parseFloat(val) || 0);
   markDirty(date); flushSave();
   refreshMetricsCell(di);
+}
+
+function formatRevInput(el, di) {
+  const raw = Math.round(parseFloat(el.value.replace(/[^0-9.]/g, '')) || 0);
+  el.dataset.raw = raw;
+  el.value = raw > 0 ? '$' + raw.toLocaleString() : '';
+  updateExpectedRevenue(di, raw);
 }
 
 async function changeWeek(delta) {
