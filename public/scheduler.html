@@ -103,10 +103,11 @@ table.sched-table { border-collapse: collapse; width: 100%; }
   letter-spacing: 0.2px;
 }
 .visit-day-cell { text-align: center; padding: 5px 6px; border-right: 1px solid #E8EEF5; }
-.visit-row-item { display: flex; align-items: center; gap: 5px; justify-content: center; margin: 2px 0; }
+.visit-inputs-wrap { display: inline-flex; flex-direction: column; gap: 3px; }
+.visit-row-item { display: flex; align-items: center; gap: 5px; }
 .visit-row-lbl { font-size: 10.5px; font-weight: 600; color: #64748B; white-space: nowrap; }
 .visit-in {
-  width: 60px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 7px;
+  width: 80px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 7px;
   font-size: 14px; font-weight: 800; text-align: center; color: #1E293B;
   background: white; display: block;
 }
@@ -213,7 +214,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 
 /* ── EXPECTED REVENUE ── */
 .rev-in {
-  width: 60px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
+  width: 80px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
   font-size: 14px; font-weight: 700; text-align: center; color: #0F766E;
   background: white; display: block;
 }
@@ -347,10 +348,6 @@ table.sched-table { border-collapse: collapse; width: 100%; }
     <div class="form-group">
       <label class="form-label">Name</label>
       <input type="text" class="form-input" id="pName" placeholder="Full name">
-    </div>
-    <div class="form-group">
-      <label class="form-label" id="pSubLabel">Specialty</label>
-      <input type="text" class="form-input" id="pSub" placeholder="">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -537,14 +534,22 @@ function renderGrid() {
     const rev = (S.schedule[d] || {}).expectedRevenue || 0;
     const todayCls = isToday(i) ? ' today-cell' : '';
     html += `<td class="visit-day-cell${todayCls}">`;
+    const revFmt = rev > 0 ? '$' + Math.round(rev).toLocaleString() : '';
     if (isReadOnly) {
-      html += `<div class="visit-row-item"><span class="visit-count-ro">${cnt}</span><span class="visit-row-lbl">Visits</span></div>
-               <div class="visit-row-item"><span class="visit-count-ro" style="font-size:14px;color:#0F766E">$${Math.round(rev).toLocaleString()}</span><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>`;
+      html += `<div class="visit-inputs-wrap">
+        <div class="visit-row-item"><span class="visit-count-ro">${cnt}</span><span class="visit-row-lbl">Visits</span></div>
+        <div class="visit-row-item"><span class="visit-count-ro" style="font-size:14px;color:#0F766E">${revFmt || '—'}</span><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>
+      </div>`;
     } else {
-      html += `<div class="visit-row-item"><input type="number" class="visit-in" value="${cnt}" min="0" step="1"
-                 onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()"><span class="visit-row-lbl">Visits</span></div>
-               <div class="visit-row-item"><input type="number" class="rev-in" value="${Math.round(rev)}" min="0" step="100"
-                 onchange="updateExpectedRevenue(${i},this.value)" onclick="event.stopPropagation()" placeholder="0"><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>`;
+      html += `<div class="visit-inputs-wrap">
+        <div class="visit-row-item"><input type="number" class="visit-in" value="${cnt}" min="0" step="1"
+          onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()"><span class="visit-row-lbl">Visits</span></div>
+        <div class="visit-row-item"><input type="text" inputmode="numeric" class="rev-in" value="${revFmt}"
+          data-raw="${Math.round(rev)}"
+          onfocus="this.value=this.dataset.raw||'';this.select()"
+          onblur="formatRevInput(this,${i})"
+          onclick="event.stopPropagation()" placeholder="$0"><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>
+      </div>`;
     }
     html += `</td>`;
   });
@@ -841,6 +846,13 @@ function updateExpectedRevenue(di, val) {
   refreshMetricsCell(di);
 }
 
+function formatRevInput(el, di) {
+  const raw = Math.round(parseFloat(el.value.replace(/[^0-9.]/g, '')) || 0);
+  el.dataset.raw = raw;
+  el.value = raw > 0 ? '$' + raw.toLocaleString() : '';
+  updateExpectedRevenue(di, raw);
+}
+
 async function changeWeek(delta) {
   S.weekOffset = delta===0 ? 0 : S.weekOffset + delta;
   await loadSchedule(); renderAll();
@@ -853,25 +865,23 @@ let addPersonType = null;
 function openAddModal(type) {
   addPersonType = type;
   document.getElementById('pName').value = '';
-  document.getElementById('pSub').value  = '';
   document.getElementById('addModalTitle').textContent = type==='dvm' ? '+ Add DVM' : '+ Add Support Staff';
-  document.getElementById('pSubLabel').textContent     = type==='dvm' ? 'Specialty' : 'Role';
-  document.getElementById('pSub').placeholder         = type==='dvm' ? 'e.g. General Practice' : 'e.g. Vet Tech';
   document.getElementById('addModal').style.display   = 'flex';
   setTimeout(() => document.getElementById('pName').focus(), 50);
 }
 
 async function commitAddPerson() {
   const name = document.getElementById('pName').value.trim(); if (!name) return;
-  const sub  = document.getElementById('pSub').value.trim();
   const url  = addPersonType==='dvm' ? `/api/locations/${locationId}/dvms` : `/api/locations/${locationId}/staff`;
   const body = addPersonType==='dvm'
-    ? { name, specialty:  sub||'General Practice', color:DVM_PALETTE[S.dvms.length % DVM_PALETTE.length] }
-    : { name, role_title: sub||'Support Staff',    color:STAFF_PALETTE[S.staff.length % STAFF_PALETTE.length] };
+    ? { name, specialty:  'General Practice', color:DVM_PALETTE[S.dvms.length % DVM_PALETTE.length] }
+    : { name, role_title: 'Support Staff',   color:STAFF_PALETTE[S.staff.length % STAFF_PALETTE.length] };
   const res    = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!res.ok) return;
   const person = await res.json();
+  if (!person?.name) return;
   if (addPersonType==='dvm') S.dvms.push({ id:String(person.id), name:person.name, sub:person.specialty,  color:person.color });
-  else                       S.staff.push({ id:String(person.id), name:person.name, sub:person.role_title, color:person.color });
+  else                       S.staff.push({ id:String(person.id), name:person.name, sub:person.role_title, color:person.color, hourlyRate: person.hourly_rate || 0 });
   closeModal(); renderGrid();
 }
 
