@@ -319,9 +319,9 @@ const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 // ── METRIC HELPERS ────────────────────────────────────────
 
 // Returns a colored ratio chip HTML string
-function ratioChip(ratio, target, label) {
+function ratioChip(ratio, target, label, lowerIsBetter=false) {
   if (!target || target <= 0) return `<span class="ratio-chip ratio-neutral">${label}: —</span>`;
-  const cls = ratio >= target ? 'ratio-green' : 'ratio-red';
+  const cls = lowerIsBetter ? (ratio <= target ? 'ratio-green' : 'ratio-red') : (ratio >= target ? 'ratio-green' : 'ratio-red');
   return `<span class="ratio-chip ${cls}" title="Target: ${target.toFixed(1)}">${label}: ${ratio.toFixed(2)}</span>`;
 }
 
@@ -331,7 +331,7 @@ function makeMetricCell(dvmH, supH, vis, settings, clickAttr, isTotal) {
   if (!dvmH) return `<td class="${isTotal ? 'empty-cell total-cell' : 'empty-cell'}">—</td>`;
   const supRatio = supH / dvmH;
   const visRatio = vis / dvmH;
-  const supChip  = ratioChip(supRatio, settings.support_per_dvm_hour, 'S/D');
+  const supChip  = ratioChip(supRatio, settings.support_per_dvm_hour, 'S/D', true);
   const visChip  = ratioChip(visRatio, settings.visits_per_dvm_hour, 'V/D');
   const tdAttrs  = clickAttr
     ? `class="${cellClass}" onclick="${clickAttr}"`
@@ -509,7 +509,7 @@ async function openDrill(locId, date) {
   document.getElementById('drillDate').textContent  = fmtDate(date);
 
   const dvmH   = data.dvms.reduce((s, a) => s + a.hours, 0);
-  const supH   = data.staff.reduce((s, a) => s + a.hours, 0);
+  const supH   = data.staff.reduce((s, a) => s + (a.hours||0) + (a.break_hours||0), 0);
   const visits = data.visitCount || 0;
 
   let body = `

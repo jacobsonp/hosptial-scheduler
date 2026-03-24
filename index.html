@@ -450,9 +450,10 @@ function metrics(di) {
            visDiff: vis - tgtVis, supDiff: supH - tgtSup, hasData: dvmH > 0 };
 }
 
-function chipClass(ratio, target) {
+function chipClass(ratio, target, lowerIsBetter=false) {
   if (ratio === null || target === 0) return 'chip-none';
   const r = ratio / target;
+  if (lowerIsBetter) return r <= 1.12 ? 'chip-ok' : 'chip-low';
   if (r >= 0.88 && r <= 1.12) return 'chip-ok';
   return r < 0.88 ? 'chip-low' : 'chip-high';
 }
@@ -611,7 +612,7 @@ function renderMetrics(m) {
   if (!m.hasData) return `<div class="no-dvms-msg">No DVMs scheduled</div>`;
 
   const vChip = chipClass(m.vRatio, S.targets.visitsPerDVMHour);
-  const sChip = chipClass(m.sRatio, S.targets.supportPerDVMHour);
+  const sChip = chipClass(m.sRatio, S.targets.supportPerDVMHour, true);
   const vBw   = barWidth(m.vRatio, S.targets.visitsPerDVMHour);
   const sBw   = barWidth(m.sRatio, S.targets.supportPerDVMHour);
   const vDiff = diffText(m.visDiff, 'visits', v => Math.round(Math.abs(v)));
