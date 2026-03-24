@@ -415,7 +415,7 @@ function daySchedule(di) {
 function metrics(di) {
   const day  = daySchedule(di);
   const dvmH = day.dvms.reduce((s,a) => s + (+a.workHours||0), 0);
-  const supH = day.staff.reduce((s,a) => s + (+a.workHours||0), 0);
+  const supH = day.staff.reduce((s,a) => s + (+a.workHours||0) + (+a.breakHours||0), 0);
   const vis  = day.visitCount || 0;
   const rev  = day.expectedRevenue || 0;
   const supComp = day.staff.reduce((sum, a) => {
@@ -577,7 +577,7 @@ function renderGrid() {
     const sStr  = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
     const scStr = m.scPct  !== null ? m.scPct.toFixed(1) + '%' : '—';
     const vCls  = ratioClass(m.vRatio, S.targets.visitsPerDVMHour, false);
-    const sCls  = ratioClass(m.sRatio, S.targets.supportPerDVMHour, false);
+    const sCls  = ratioClass(m.sRatio, S.targets.supportPerDVMHour, true);
     const scCls = ratioClass(m.scPct,  S.targets.supportCompPctTarget, true);
     html += `<td class="metrics-day-cell${todayCls}">`;
     if (!m.hasData && !m.vis) {

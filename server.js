@@ -267,7 +267,7 @@ app.get('/api/rollup', requireRole('corporate'), (req, res) => {
 
     const days = dates.map(date => {
       const dvmHours = db.prepare(`SELECT COALESCE(SUM(hours),0) as t FROM assignments WHERE location_id=? AND date=? AND person_type='dvm'`).get(loc.id, date).t;
-      const supHours = db.prepare(`SELECT COALESCE(SUM(hours),0) as t FROM assignments WHERE location_id=? AND date=? AND person_type='staff'`).get(loc.id, date).t;
+      const supHours = db.prepare(`SELECT COALESCE(SUM(hours + COALESCE(break_hours,0)),0) as t FROM assignments WHERE location_id=? AND date=? AND person_type='staff'`).get(loc.id, date).t;
       const vcRow    = db.prepare('SELECT COALESCE(count, 0) as c FROM visit_counts WHERE location_id=? AND date=?').get(loc.id, date);
       const visits   = vcRow ? vcRow.c : 0;
       return { date, dvmHours, supHours, visits };
