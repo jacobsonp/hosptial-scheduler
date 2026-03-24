@@ -98,19 +98,21 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .visit-row td { background: #FAFBFC; border-bottom: 2px solid #E2E8F0; }
 .visit-row td.today-cell { background: #EEF5FF !important; }
 .visit-name-cell {
-  padding: 10px 14px; font-size: 12px; font-weight: 600; color: #475569;
+  padding: 6px 14px; font-size: 12px; font-weight: 600; color: #475569;
   white-space: nowrap; border-right: 1px solid #E2E8F0;
   letter-spacing: 0.2px;
 }
-.visit-day-cell { text-align: center; padding: 8px 6px; border-right: 1px solid #E8EEF5; }
+.visit-day-cell { text-align: center; padding: 5px 6px; border-right: 1px solid #E8EEF5; }
+.visit-row-item { display: flex; align-items: center; gap: 5px; justify-content: center; margin: 2px 0; }
+.visit-row-lbl { font-size: 10.5px; font-weight: 600; color: #64748B; white-space: nowrap; }
 .visit-in {
-  width: 72px; padding: 6px 4px; border: 1.5px solid #CBD5E1; border-radius: 7px;
-  font-size: 22px; font-weight: 800; text-align: center; color: #1E293B;
-  background: white; display: block; margin: 0 auto;
+  width: 60px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 7px;
+  font-size: 14px; font-weight: 800; text-align: center; color: #1E293B;
+  background: white; display: block;
 }
 .visit-in:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
 .visit-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
-.visit-count-ro { font-size: 22px; font-weight: 800; color: #1E293B; }
+.visit-count-ro { font-size: 14px; font-weight: 800; color: #1E293B; }
 
 /* ── SECTION HEADERS ── */
 .section-hdr-row td {
@@ -136,7 +138,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
   border-right: 1px solid #E2E8F0; vertical-align: middle; position: relative;
   background: white;
 }
-.name-cell-inner { padding: 6px 10px 6px 14px; display: flex; align-items: center; gap: 8px; }
+.name-cell-inner { padding: 4px 10px 4px 14px; display: flex; align-items: center; gap: 8px; }
 .p-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .p-info { flex: 1; min-width: 0; }
 .p-name { font-size: 12.5px; font-weight: 700; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -161,18 +163,18 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .empty-cell { text-align: center; background: #FAFBFC !important; }
 .empty-cell.today-cell { background: #F0F6FF !important; }
 .add-day-btn {
-  width: 100%; min-height: 62px; background: none; border: none;
+  width: 100%; min-height: 44px; background: none; border: none;
   font-size: 18px; color: #D1D5DB; cursor: pointer; transition: all 0.15s;
 }
 .add-day-btn:hover { color: #3B82F6; background: #EEF5FF; }
 
 /* Scheduled cell */
-.sched-cell { padding: 8px 6px; }
+.sched-cell { padding: 4px 6px; }
 .cell-inner-grid { display: flex; align-items: center; gap: 2px; justify-content: center; }
 .hr-inputs { display: flex; gap: 7px; justify-content: center; }
 .hr-grp { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .hr-in {
-  width: 44px; padding: 5px 3px; border: 1px solid #D1D5DB;
+  width: 44px; padding: 3px 3px; border: 1px solid #D1D5DB;
   border-radius: 6px; font-size: 15px; font-weight: 700;
   text-align: center; color: #1E293B; background: white;
 }
@@ -211,13 +213,12 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 
 /* ── EXPECTED REVENUE ── */
 .rev-in {
-  width: 72px; padding: 3px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
-  font-size: 13px; font-weight: 700; text-align: center; color: #0F766E;
-  background: white; display: block; margin: 4px auto 0;
+  width: 60px; padding: 4px 4px; border: 1.5px solid #CBD5E1; border-radius: 6px;
+  font-size: 14px; font-weight: 700; text-align: center; color: #0F766E;
+  background: white; display: block;
 }
 .rev-in:focus { outline: none; border-color: #0D9488; box-shadow: 0 0 0 2px rgba(13,148,136,0.15); }
 .rev-in[readonly] { border-color: transparent; background: transparent; cursor: default; }
-.visit-rev-lbl { font-size: 9px; color: #0F766E; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; display: block; }
 .visit-name-cell-inner { display: flex; flex-direction: column; gap: 0; padding-left: 17px; }
 .visit-label-group { line-height: 1.3; }
 
@@ -537,14 +538,13 @@ function renderGrid() {
     const todayCls = isToday(i) ? ' today-cell' : '';
     html += `<td class="visit-day-cell${todayCls}">`;
     if (isReadOnly) {
-      html += `<span class="visit-count-ro">${cnt}</span>
-               <span class="visit-count-ro" style="font-size:13px;color:#0F766E">$${Math.round(rev).toLocaleString()}</span>`;
+      html += `<div class="visit-row-item"><span class="visit-count-ro">${cnt}</span><span class="visit-row-lbl">Visits</span></div>
+               <div class="visit-row-item"><span class="visit-count-ro" style="font-size:14px;color:#0F766E">$${Math.round(rev).toLocaleString()}</span><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>`;
     } else {
-      html += `<input type="number" class="visit-in" value="${cnt}" min="0" step="1"
-                 onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()">
-               <input type="number" class="rev-in" value="${Math.round(rev)}" min="0" step="100"
-                 onchange="updateExpectedRevenue(${i},this.value)" onclick="event.stopPropagation()" placeholder="0">
-               <span class="visit-rev-lbl">revenue</span>`;
+      html += `<div class="visit-row-item"><input type="number" class="visit-in" value="${cnt}" min="0" step="1"
+                 onchange="updateVisitCount(${i},this.value)" onclick="event.stopPropagation()"><span class="visit-row-lbl">Visits</span></div>
+               <div class="visit-row-item"><input type="number" class="rev-in" value="${Math.round(rev)}" min="0" step="100"
+                 onchange="updateExpectedRevenue(${i},this.value)" onclick="event.stopPropagation()" placeholder="0"><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>`;
     }
     html += `</td>`;
   });
