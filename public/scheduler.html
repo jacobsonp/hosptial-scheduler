@@ -349,10 +349,6 @@ table.sched-table { border-collapse: collapse; width: 100%; }
       <label class="form-label">Name</label>
       <input type="text" class="form-input" id="pName" placeholder="Full name">
     </div>
-    <div class="form-group">
-      <label class="form-label" id="pSubLabel">Specialty</label>
-      <input type="text" class="form-input" id="pSub" placeholder="">
-    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="commitAddPerson()">Add</button>
@@ -869,25 +865,23 @@ let addPersonType = null;
 function openAddModal(type) {
   addPersonType = type;
   document.getElementById('pName').value = '';
-  document.getElementById('pSub').value  = '';
   document.getElementById('addModalTitle').textContent = type==='dvm' ? '+ Add DVM' : '+ Add Support Staff';
-  document.getElementById('pSubLabel').textContent     = type==='dvm' ? 'Specialty' : 'Role';
-  document.getElementById('pSub').placeholder         = type==='dvm' ? 'e.g. General Practice' : 'e.g. Vet Tech';
   document.getElementById('addModal').style.display   = 'flex';
   setTimeout(() => document.getElementById('pName').focus(), 50);
 }
 
 async function commitAddPerson() {
   const name = document.getElementById('pName').value.trim(); if (!name) return;
-  const sub  = document.getElementById('pSub').value.trim();
   const url  = addPersonType==='dvm' ? `/api/locations/${locationId}/dvms` : `/api/locations/${locationId}/staff`;
   const body = addPersonType==='dvm'
-    ? { name, specialty:  sub||'General Practice', color:DVM_PALETTE[S.dvms.length % DVM_PALETTE.length] }
-    : { name, role_title: sub||'Support Staff',    color:STAFF_PALETTE[S.staff.length % STAFF_PALETTE.length] };
+    ? { name, specialty:  'General Practice', color:DVM_PALETTE[S.dvms.length % DVM_PALETTE.length] }
+    : { name, role_title: 'Support Staff',   color:STAFF_PALETTE[S.staff.length % STAFF_PALETTE.length] };
   const res    = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!res.ok) return;
   const person = await res.json();
+  if (!person?.name) return;
   if (addPersonType==='dvm') S.dvms.push({ id:String(person.id), name:person.name, sub:person.specialty,  color:person.color });
-  else                       S.staff.push({ id:String(person.id), name:person.name, sub:person.role_title, color:person.color });
+  else                       S.staff.push({ id:String(person.id), name:person.name, sub:person.role_title, color:person.color, hourlyRate: person.hourly_rate || 0 });
   closeModal(); renderGrid();
 }
 
