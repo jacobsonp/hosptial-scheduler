@@ -253,6 +253,18 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .ratio-red   { background: #FEE2E2; color: #B91C1C; }
 .ratio-na    { background: #F1F5F9; color: #94A3B8; }
 
+/* ── WEEK TOTALS COLUMN ── */
+.week-th { min-width: 110px; background: #16213A !important; border-left: 2px solid rgba(99,102,241,0.5); }
+.week-th-inner { padding: 10px 6px 8px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+.week-cell { text-align: center; padding: 5px 6px; vertical-align: middle; background: #F5F7FF; border-left: 2px solid #C7D2FE; }
+.person-row td.week-cell { border-bottom: 1px solid #EEF1F6; }
+.week-hours { font-size: 11px; color: #475569; line-height: 1.6; }
+.metrics-row td.week-metrics-cell { background: #EEF2FF; border-left: 2px solid #A5B4FC; }
+.week-metrics-cell { text-align: center; padding: 7px 6px; vertical-align: middle; }
+.wk-vis-tgt { font-size: 10px; color: #64748B; margin-top: 3px; margin-bottom: 3px; }
+.vis-diff-pos { color: #15803D; font-weight: 700; }
+.vis-diff-neg { color: #B91C1C; font-weight: 700; }
+
 /* ── MODAL ── */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.4);
@@ -429,6 +441,60 @@ function metrics(di) {
   return { dvmH, supH, vis, rev, supComp, vRatio, sRatio, scPct, hasData: dvmH > 0 };
 }
 
+function weeklyMetrics() {
+  const dates = weekDates();
+  let dvmH = 0, supH = 0, vis = 0, rev = 0, supComp = 0;
+  dates.forEach((d, i) => {
+    const m = metrics(i);
+    dvmH += m.dvmH; supH += m.supH; vis += m.vis; rev += m.rev; supComp += m.supComp;
+  });
+  const vRatio = dvmH > 0 ? vis  / dvmH : null;
+  const sRatio = dvmH > 0 ? supH / dvmH : null;
+  const scPct  = rev  > 0 ? (supComp / rev) * 100 : null;
+  const tgtVis = dvmH > 0 ? dvmH * S.targets.visitsPerDVMHour : null;
+  return { dvmH, supH, vis, rev, supComp, vRatio, sRatio, scPct, tgtVis, hasData: dvmH > 0 };
+}
+
+function weekMetricsCell() {
+  const wm = weeklyMetrics();
+  if (!wm.hasData && !wm.vis) return `<td class="week-metrics-cell"><span style="color:#CBD5E1;font-size:11px;">—</span></td>`;
+  const wvStr  = wm.vRatio !== null ? wm.vRatio.toFixed(2) : '—';
+  const wsStr  = wm.sRatio !== null ? wm.sRatio.toFixed(2) : '—';
+  const wscStr = wm.scPct  !== null ? wm.scPct.toFixed(1) + '%' : '—';
+  const wvCls  = ratioClass(wm.vRatio, S.targets.visitsPerDVMHour, false);
+  const wsCls  = ratioClass(wm.sRatio, S.targets.supportPerDVMHour, true);
+  const wscCls = ratioClass(wm.scPct,  S.targets.supportCompPctTarget, true);
+  const tgtVis = wm.tgtVis !== null ? Math.round(wm.tgtVis) : null;
+  const visDiff = tgtVis !== null ? wm.vis - tgtVis : null;
+  const diffStr = visDiff !== null
+    ? `<span class="${visDiff >= 0 ? 'vis-diff-pos' : 'vis-diff-neg'}">${visDiff >= 0 ? '+' : ''}${Math.round(visDiff)}</span>`
+    : '';
+  return `<td class="week-metrics-cell">
+    <div class="mc-totals">
+      <span><span class="mc-t">${wm.dvmH}</span>h DVM</span>
+      <span style="color:#CBD5E1">&middot;</span>
+      <span><span class="mc-t">${wm.supH}</span>h Sup</span>
+      <span style="color:#CBD5E1">&middot;</span>
+      <span><span class="mc-t">${wm.vis}</span> visits</span>
+    </div>
+    ${tgtVis !== null ? `<div class="wk-vis-tgt">Target: ${tgtVis} visits &nbsp;${diffStr}</div>` : ''}
+    <div class="mc-ratios">
+      <div class="mc-ratio ${wvCls}" title="Target: ${S.targets.visitsPerDVMHour} visits/DVM-hr">
+        <span class="mc-ratio-val">${wvStr}</span>
+        <span class="mc-ratio-lbl">Vis/DVM-hr</span>
+      </div>
+      <div class="mc-ratio ${wsCls}" title="Target: ${S.targets.supportPerDVMHour} sup-hrs/DVM-hr">
+        <span class="mc-ratio-val">${wsStr}</span>
+        <span class="mc-ratio-lbl">Sup/DVM-hr</span>
+      </div>
+      <div class="mc-ratio ${wscCls}" title="Target: ≤${S.targets.supportCompPctTarget}% of revenue">
+        <span class="mc-ratio-val">${wscStr}</span>
+        <span class="mc-ratio-lbl">Sup Comp %</span>
+      </div>
+    </div>
+  </td>`;
+}
+
 function ratioClass(ratio, target, lowerIsBetter) {
   if (ratio === null || !target) return 'ratio-na';
   if (lowerIsBetter) return ratio <= target ? 'ratio-green' : 'ratio-red';
@@ -501,7 +567,7 @@ function renderAll() {
 
 function renderGrid() {
   const dates = weekDates();
-  const COLS  = 2 + 7;
+  const COLS  = 2 + 7 + 1;
 
   // ─── Header row ───
   let html = `<table class="sched-table"><thead><tr>
@@ -518,6 +584,7 @@ function renderGrid() {
       </div>
     </th>`;
   });
+  html += `<th class="week-th"><div class="week-th-inner">Week Total</div></th>`;
   html += `</tr></thead><tbody>`;
 
   // ─── Visit count row ───
@@ -553,6 +620,15 @@ function renderGrid() {
     }
     html += `</td>`;
   });
+  const wkVis = dates.reduce((s, d) => s + ((S.schedule[d]||{}).visitCount||0), 0);
+  const wkRev = dates.reduce((s, d) => s + ((S.schedule[d]||{}).expectedRevenue||0), 0);
+  const wkRevFmt = wkRev > 0 ? '$' + Math.round(wkRev).toLocaleString() : '—';
+  html += `<td class="week-cell" style="border-bottom:2px solid #C7D2FE">
+    <div class="visit-inputs-wrap">
+      <div class="visit-row-item"><span class="visit-count-ro">${wkVis}</span><span class="visit-row-lbl">Total</span></div>
+      <div class="visit-row-item"><span class="visit-count-ro" style="font-size:14px;color:#0F766E">${wkRevFmt}</span><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>
+    </div>
+  </td>`;
   html += `</tr>`;
 
   // ─── DVMs section ───
@@ -607,6 +683,7 @@ function renderGrid() {
     }
     html += `</td>`;
   });
+  html += weekMetricsCell();
   html += `</tr></tbody></table>`;
 
   document.getElementById('schedWrap').innerHTML = html;
@@ -632,8 +709,8 @@ function personRow(person, type, dates) {
   if (type === 'staff') {
     const rateVal = person.hourlyRate || 0;
     rateCell = `<td class="rate-cell">` + (isReadOnly
-      ? `<span class="hr-val" style="font-size:13px">$${rateVal}</span>`
-      : `<input type="number" class="rate-in" value="${rateVal}" min="0" step="0.5"
+      ? `<span class="hr-val" style="font-size:13px">$${(+rateVal).toFixed(2)}</span>`
+      : `<input type="number" class="rate-in" value="${(+rateVal).toFixed(2)}" min="0" step="0.5"
            onchange="updateHourlyRate('${person.id}',this.value)"
            onclick="event.stopPropagation()" title="Hourly pay rate">
          <span class="rate-lbl">$/hr</span>`) + `</td>`;
@@ -705,6 +782,15 @@ function personRow(person, type, dates) {
     }
   });
 
+  const wkParts = [];
+  if (totalWork  > 0) wkParts.push(`<span class="mc-t">${totalWork}</span>h Reg`);
+  if (totalBreak > 0) wkParts.push(`<span class="mc-t">${totalBreak}</span>h OT`);
+  if (totalOff   > 0) wkParts.push(`<span class="mc-t">${totalOff}</span>h Off`);
+  row += `<td class="week-cell">
+    <div class="week-hours">
+      ${wkParts.length ? wkParts.join('<br>') : '<span style="color:#CBD5E1">—</span>'}
+    </div>
+  </td>`;
   row += `</tr>`;
   return row;
 }
@@ -733,7 +819,7 @@ function updateHourField(type, assignId, di, field, val) {
   const a   = arr.find(x => x.id === assignId);
   if (a) a[field] = v;
   markDirty(dayKey(di)); flushSave();
-  refreshMetricsCell(di); refreshPersonStats(type, a ? a.personId : null);
+  refreshMetricsCell(di); refreshPersonStats(type, a ? a.personId : null); refreshWeeklyCell();
 }
 
 function updateVisitCount(di, val) {
@@ -741,7 +827,7 @@ function updateVisitCount(di, val) {
   if (!S.schedule[date]) S.schedule[date] = { dvms:[], staff:[], visitCount:0 };
   S.schedule[date].visitCount = Math.max(0, parseInt(val)||0);
   markDirty(date); flushSave();
-  refreshMetricsCell(di);
+  refreshMetricsCell(di); refreshWeeklyCell();
 }
 
 function refreshMetricsCell(di) {
@@ -750,7 +836,7 @@ function refreshMetricsCell(di) {
   const sStr   = m.sRatio !== null ? m.sRatio.toFixed(2) : '—';
   const scStr  = m.scPct  !== null ? m.scPct.toFixed(1) + '%' : '—';
   const vCls   = ratioClass(m.vRatio, S.targets.visitsPerDVMHour, false);
-  const sCls   = ratioClass(m.sRatio, S.targets.supportPerDVMHour, false);
+  const sCls   = ratioClass(m.sRatio, S.targets.supportPerDVMHour, true);
   const scCls  = ratioClass(m.scPct,  S.targets.supportCompPctTarget, true);
   const metricsRow = document.querySelector('.metrics-row');
   if (!metricsRow) return;
@@ -784,6 +870,18 @@ function refreshMetricsCell(di) {
   }
 }
 
+function refreshWeeklyCell() {
+  const metricsRow = document.querySelector('.metrics-row');
+  if (!metricsRow) return;
+  const cells = metricsRow.querySelectorAll('td');
+  const lastCell = cells[cells.length - 1];
+  if (!lastCell || !lastCell.classList.contains('week-metrics-cell')) return;
+  const tmp = document.createElement('table');
+  tmp.innerHTML = `<tbody><tr>${weekMetricsCell()}</tr></tbody>`;
+  const newCell = tmp.querySelector('.week-metrics-cell');
+  if (newCell) lastCell.replaceWith(newCell);
+}
+
 function refreshPersonStats(type, personId) {
   if (!personId) return;
   const row = document.querySelector(`tr[data-pid="${personId}"][data-ptype="${type}"]`);
@@ -795,13 +893,14 @@ function refreshPersonStats(type, personId) {
     const a   = (type==='dvm' ? day.dvms : day.staff).find(x => x.personId === personId);
     if (a) { totalWork += +a.workHours||0; totalBreak += +a.breakHours||0; totalOff += +a.timeOffHours||0; }
   });
-  const statsEl = row.querySelector('.p-stats');
-  if (!statsEl) return;
-  const parts = [];
-  if (totalWork  > 0) parts.push(`${totalWork}h reg`);
-  if (totalBreak > 0) parts.push(`${totalBreak}h OT`);
-  if (totalOff   > 0) parts.push(`${totalOff}h off`);
-  statsEl.innerHTML = parts.join(' &middot; ');
+  const weekCell = row.querySelector('td.week-cell');
+  if (weekCell) {
+    const wkParts = [];
+    if (totalWork  > 0) wkParts.push(`<span class="mc-t">${totalWork}</span>h Reg`);
+    if (totalBreak > 0) wkParts.push(`<span class="mc-t">${totalBreak}</span>h OT`);
+    if (totalOff   > 0) wkParts.push(`<span class="mc-t">${totalOff}</span>h Off`);
+    weekCell.querySelector('.week-hours').innerHTML = wkParts.length ? wkParts.join('<br>') : '<span style="color:#CBD5E1">—</span>';
+  }
 }
 
 async function deletePersonFromPool(type, id, e) {
@@ -836,6 +935,7 @@ function updateHourlyRate(staffId, val) {
   });
   // Refresh metrics for all days since comp changed
   for (let i = 0; i < 7; i++) refreshMetricsCell(i);
+  refreshWeeklyCell();
 }
 
 function updateExpectedRevenue(di, val) {
@@ -843,7 +943,7 @@ function updateExpectedRevenue(di, val) {
   if (!S.schedule[date]) S.schedule[date] = { dvms:[], staff:[], visitCount:0, expectedRevenue:0 };
   S.schedule[date].expectedRevenue = Math.max(0, parseFloat(val) || 0);
   markDirty(date); flushSave();
-  refreshMetricsCell(di);
+  refreshMetricsCell(di); refreshWeeklyCell();
 }
 
 function formatRevInput(el, di) {
