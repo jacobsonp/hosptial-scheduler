@@ -190,7 +190,7 @@ app.get('/api/locations/:locId/schedule', requireAuth, (req, res) => {
   });
 
   const settings = db.prepare('SELECT * FROM location_settings WHERE location_id = ?').get(locId)
-    || { visits_per_dvm_hour: 2.5, support_per_dvm_hour: 1.5, support_comp_pct_target: 30 };
+    || { visits_per_dvm_hour: 2.5, support_per_dvm_hour: 1.5, support_comp_pct_target: 30, weekly_visit_target: 0, weekly_revenue_target: 0 };
 
   const location = db.prepare('SELECT * FROM locations WHERE id = ?').get(locId);
 
@@ -232,11 +232,17 @@ app.put('/api/locations/:locId/settings', requireAuth, (req, res) => {
   const { locId } = req.params;
   if (req.session.role === 'staff') return res.status(403).json({ error: 'Forbidden' });
   if (!canAccessLocation(req, locId)) return res.status(403).json({ error: 'Forbidden' });
-  const { visitsPerDVMHour, supportPerDVMHour, supportCompPctTarget } = req.body;
+  const { visitsPerDVMHour, supportPerDVMHour, supportCompPctTarget, weeklyVisitTarget, weeklyRevenueTarget } = req.body;
   db.prepare(`
-    INSERT INTO location_settings (location_id, visits_per_dvm_hour, support_per_dvm_hour, support_comp_pct_target) VALUES (?,?,?,?)
-    ON CONFLICT(location_id) DO UPDATE SET visits_per_dvm_hour=excluded.visits_per_dvm_hour, support_per_dvm_hour=excluded.support_per_dvm_hour, support_comp_pct_target=excluded.support_comp_pct_target
-  `).run(locId, visitsPerDVMHour, supportPerDVMHour, supportCompPctTarget != null ? supportCompPctTarget : 30);
+    INSERT INTO location_settings (location_id, visits_per_dvm_hour, support_per_dvm_hour, support_comp_pct_target, weekly_visit_target, weekly_revenue_target)
+    VALUES (?,?,?,?,?,?)
+    ON CONFLICT(location_id) DO UPDATE SET
+      visits_per_dvm_hour=excluded.visits_per_dvm_hour,
+      support_per_dvm_hour=excluded.support_per_dvm_hour,
+      support_comp_pct_target=excluded.support_comp_pct_target,
+      weekly_visit_target=excluded.weekly_visit_target,
+      weekly_revenue_target=excluded.weekly_revenue_target
+  `).run(locId, visitsPerDVMHour, supportPerDVMHour, supportCompPctTarget ?? 30, weeklyVisitTarget ?? 0, weeklyRevenueTarget ?? 0);
   res.json({ ok: true });
 });
 

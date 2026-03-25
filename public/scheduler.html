@@ -258,10 +258,12 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .week-th-inner { padding: 10px 6px 8px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
 .week-cell { text-align: center; padding: 5px 6px; vertical-align: middle; background: #F5F7FF; border-left: 2px solid #C7D2FE; }
 .person-row td.week-cell { border-bottom: 1px solid #EEF1F6; }
-.week-hours { font-size: 11px; color: #475569; line-height: 1.6; }
+.week-hours { font-size: 11px; color: #475569; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
 .metrics-row td.week-metrics-cell { background: #EEF2FF; border-left: 2px solid #A5B4FC; }
 .week-metrics-cell { text-align: center; padding: 7px 6px; vertical-align: middle; }
 .wk-vis-tgt { font-size: 10px; color: #64748B; margin-top: 3px; margin-bottom: 3px; }
+.wk-tgt-line { font-size: 10px; color: #64748B; margin-top: 3px; white-space: nowrap; }
+.wk-tgt-lbl { font-weight: 600; color: #94A3B8; margin-right: 2px; }
 .vis-diff-pos { color: #15803D; font-weight: 700; }
 .vis-diff-neg { color: #B91C1C; font-weight: 700; }
 
@@ -345,6 +347,22 @@ table.sched-table { border-collapse: collapse; width: 100%; }
           <span class="setting-unit">%</span>
         </div>
       </div>
+      <div class="setting-row">
+        <label class="setting-label">Weekly visit target</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtWeekVisits" min="0" step="1"
+                 onchange="setWeeklyTarget('weeklyVisitTarget', this.value)">
+          <span class="setting-unit">visits</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label class="setting-label">Weekly revenue target</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtWeekRevenue" min="0" step="1000"
+                 onchange="setWeeklyTarget('weeklyRevenueTarget', this.value)">
+          <span class="setting-unit">$</span>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -380,7 +398,7 @@ let locationId  = null;
 let allLocations = [];
 let isReadOnly  = false;
 let S = {
-  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5, supportCompPctTarget: 30 },
+  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5, supportCompPctTarget: 30, weeklyVisitTarget: 0, weeklyRevenueTarget: 0 },
   dvms: [], staff: [], schedule: {}, weekOffset: 0, uid: 1,
 };
 let dirtyDates = new Set();
@@ -464,20 +482,25 @@ function weekMetricsCell() {
   const wvCls  = ratioClass(wm.vRatio, S.targets.visitsPerDVMHour, false);
   const wsCls  = ratioClass(wm.sRatio, S.targets.supportPerDVMHour, true);
   const wscCls = ratioClass(wm.scPct,  S.targets.supportCompPctTarget, true);
-  const tgtVis = wm.tgtVis !== null ? Math.round(wm.tgtVis) : null;
-  const visDiff = tgtVis !== null ? wm.vis - tgtVis : null;
-  const diffStr = visDiff !== null
-    ? `<span class="${visDiff >= 0 ? 'vis-diff-pos' : 'vis-diff-neg'}">${visDiff >= 0 ? '+' : ''}${Math.round(visDiff)}</span>`
+  const fmtMoney = v => '$' + Math.round(Math.abs(v)).toLocaleString();
+  const fmtDiff  = (d, fmt) => `<span class="${d >= 0 ? 'vis-diff-pos' : 'vis-diff-neg'}">${d >= 0 ? '+' : '−'}${fmt(Math.abs(d))}</span>`;
+
+  const wkVisTgt = S.targets.weeklyVisitTarget  || 0;
+  const wkRevTgt = S.targets.weeklyRevenueTarget || 0;
+  const visLine = wkVisTgt > 0
+    ? `<div class="wk-tgt-line"><span class="wk-tgt-lbl">Visits</span> <span class="mc-t">${wm.vis}</span> / ${wkVisTgt} &nbsp;${fmtDiff(wm.vis - wkVisTgt, v => Math.round(v))}</div>`
     : '';
+  const revLine = wkRevTgt > 0
+    ? `<div class="wk-tgt-line"><span class="wk-tgt-lbl">Revenue</span> <span class="mc-t">${fmtMoney(wm.rev)}</span> / ${fmtMoney(wkRevTgt)} &nbsp;${fmtDiff(wm.rev - wkRevTgt, fmtMoney)}</div>`
+    : '';
+
   return `<td class="week-metrics-cell">
     <div class="mc-totals">
       <span><span class="mc-t">${wm.dvmH}</span>h DVM</span>
       <span style="color:#CBD5E1">&middot;</span>
       <span><span class="mc-t">${wm.supH}</span>h Sup</span>
-      <span style="color:#CBD5E1">&middot;</span>
-      <span><span class="mc-t">${wm.vis}</span> visits</span>
     </div>
-    ${tgtVis !== null ? `<div class="wk-vis-tgt">Target: ${tgtVis} visits &nbsp;${diffStr}</div>` : ''}
+    ${visLine}${revLine}
     <div class="mc-ratios">
       <div class="mc-ratio ${wvCls}" title="Target: ${S.targets.visitsPerDVMHour} visits/DVM-hr">
         <span class="mc-ratio-val">${wvStr}</span>
@@ -522,9 +545,11 @@ async function loadSchedule() {
       expectedRevenue: day.expectedRevenue || 0,
     };
   });
-  S.targets.visitsPerDVMHour    = data.settings.visits_per_dvm_hour;
-  S.targets.supportPerDVMHour   = data.settings.support_per_dvm_hour;
+  S.targets.visitsPerDVMHour     = data.settings.visits_per_dvm_hour;
+  S.targets.supportPerDVMHour    = data.settings.support_per_dvm_hour;
   S.targets.supportCompPctTarget = data.settings.support_comp_pct_target || 30;
+  S.targets.weeklyVisitTarget    = data.settings.weekly_visit_target  || 0;
+  S.targets.weeklyRevenueTarget  = data.settings.weekly_revenue_target || 0;
 }
 
 // ── SAVE ───────────────────────────────────────────────────
@@ -551,7 +576,7 @@ async function saveSettings() {
   if (isReadOnly) return;
   await fetch(`/api/locations/${locationId}/settings`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ visitsPerDVMHour:S.targets.visitsPerDVMHour, supportPerDVMHour:S.targets.supportPerDVMHour, supportCompPctTarget:S.targets.supportCompPctTarget }),
+    body: JSON.stringify({ visitsPerDVMHour:S.targets.visitsPerDVMHour, supportPerDVMHour:S.targets.supportPerDVMHour, supportCompPctTarget:S.targets.supportCompPctTarget, weeklyVisitTarget:S.targets.weeklyVisitTarget, weeklyRevenueTarget:S.targets.weeklyRevenueTarget }),
   });
 }
 
@@ -559,9 +584,11 @@ async function saveSettings() {
 
 function renderAll() {
   document.getElementById('weekLabel').textContent = weekLabel();
-  document.getElementById('tgtVisits').value     = S.targets.visitsPerDVMHour;
-  document.getElementById('tgtSupport').value    = S.targets.supportPerDVMHour;
-  document.getElementById('tgtSupCompPct').value = S.targets.supportCompPctTarget;
+  document.getElementById('tgtVisits').value      = S.targets.visitsPerDVMHour;
+  document.getElementById('tgtSupport').value     = S.targets.supportPerDVMHour;
+  document.getElementById('tgtSupCompPct').value  = S.targets.supportCompPctTarget;
+  document.getElementById('tgtWeekVisits').value  = S.targets.weeklyVisitTarget  || '';
+  document.getElementById('tgtWeekRevenue').value = S.targets.weeklyRevenueTarget || '';
   renderGrid();
 }
 
@@ -788,7 +815,7 @@ function personRow(person, type, dates) {
   if (totalOff   > 0) wkParts.push(`<span class="mc-t">${totalOff}</span>h Off`);
   row += `<td class="week-cell">
     <div class="week-hours">
-      ${wkParts.length ? wkParts.join('<br>') : '<span style="color:#CBD5E1">—</span>'}
+      ${wkParts.length ? wkParts.join(' <span style="color:#CBD5E1">&middot;</span> ') : '<span style="color:#CBD5E1">—</span>'}
     </div>
   </td>`;
   row += `</tr>`;
@@ -899,7 +926,7 @@ function refreshPersonStats(type, personId) {
     if (totalWork  > 0) wkParts.push(`<span class="mc-t">${totalWork}</span>h Reg`);
     if (totalBreak > 0) wkParts.push(`<span class="mc-t">${totalBreak}</span>h OT`);
     if (totalOff   > 0) wkParts.push(`<span class="mc-t">${totalOff}</span>h Off`);
-    weekCell.querySelector('.week-hours').innerHTML = wkParts.length ? wkParts.join('<br>') : '<span style="color:#CBD5E1">—</span>';
+    weekCell.querySelector('.week-hours').innerHTML = wkParts.length ? wkParts.join(' <span style="color:#CBD5E1">&middot;</span> ') : '<span style="color:#CBD5E1">—</span>';
   }
 }
 
@@ -921,6 +948,11 @@ async function deletePersonFromPool(type, id, e) {
 
 function setTarget(key, val) {
   S.targets[key] = Math.max(0.1, parseFloat(val)||1);
+  saveSettings(); renderGrid();
+}
+
+function setWeeklyTarget(key, val) {
+  S.targets[key] = Math.max(0, parseFloat(val)||0);
   saveSettings(); renderGrid();
 }
 
