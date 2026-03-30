@@ -97,6 +97,8 @@ tryExec('ALTER TABLE assignments ADD COLUMN time_off_hours REAL DEFAULT 0');
 tryExec('ALTER TABLE support_staff ADD COLUMN hourly_rate REAL DEFAULT 0');
 tryExec('ALTER TABLE visit_counts ADD COLUMN expected_revenue REAL DEFAULT 0');
 tryExec('ALTER TABLE location_settings ADD COLUMN support_comp_pct_target REAL DEFAULT 30');
+tryExec('ALTER TABLE location_settings ADD COLUMN weekly_visit_target INTEGER DEFAULT 0');
+tryExec('ALTER TABLE location_settings ADD COLUMN weekly_revenue_target REAL DEFAULT 0');
 
 function seed() {
   const count = db.prepare('SELECT COUNT(*) as c FROM locations').get().c;

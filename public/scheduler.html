@@ -258,10 +258,12 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .week-th-inner { padding: 10px 6px 8px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
 .week-cell { text-align: center; padding: 5px 6px; vertical-align: middle; background: #F5F7FF; border-left: 2px solid #C7D2FE; }
 .person-row td.week-cell { border-bottom: 1px solid #EEF1F6; }
-.week-hours { font-size: 11px; color: #475569; line-height: 1.6; }
+.week-hours { font-size: 11px; color: #475569; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
 .metrics-row td.week-metrics-cell { background: #EEF2FF; border-left: 2px solid #A5B4FC; }
 .week-metrics-cell { text-align: center; padding: 7px 6px; vertical-align: middle; }
 .wk-vis-tgt { font-size: 10px; color: #64748B; margin-top: 3px; margin-bottom: 3px; }
+.wk-tgt-line { font-size: 10px; color: #64748B; margin-top: 3px; white-space: nowrap; }
+.wk-tgt-lbl { font-weight: 600; color: #94A3B8; margin-right: 2px; }
 .vis-diff-pos { color: #15803D; font-weight: 700; }
 .vis-diff-neg { color: #B91C1C; font-weight: 700; }
 
@@ -287,6 +289,61 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+
+/* ── TABS ── */
+.tab-bar {
+  height: 40px; background: #0F2D4A; border-bottom: 2px solid rgba(255,255,255,0.07);
+  display: flex; align-items: flex-end; padding: 0 20px; gap: 2px; flex-shrink: 0;
+}
+.tab-btn {
+  padding: 0 22px; height: 36px; font-size: 13px; font-weight: 600;
+  color: rgba(255,255,255,0.5); background: none; border: none;
+  border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.15s;
+  border-radius: 6px 6px 0 0; position: relative; bottom: -2px;
+}
+.tab-btn:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.08); }
+.tab-btn.active { color: white; border-bottom-color: #60A5FA; background: rgba(255,255,255,0.1); }
+
+/* ── KEY METRICS PANEL ── */
+.metrics-panel { flex: 1; overflow-y: auto; background: #ECEEF3; flex-direction: column; min-height: 0; }
+.km-topbar { background: white; padding: 14px 26px; border-bottom: 1px solid #DDE3EC; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.km-topbar-title { font-size: 15px; font-weight: 700; color: #0F2D4A; }
+.km-period-chip { margin-left: auto; font-size: 11.5px; font-weight: 600; color: #475569; background: #F1F5F9; padding: 4px 13px; border-radius: 20px; border: 1px solid #DDE3EC; }
+.km-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 22px 26px; }
+.km-card { background: white; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); overflow: hidden; }
+.km-card-hdr { padding: 13px 20px 11px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #F1F5F9; }
+.km-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.km-card-name { font-size: 14px; font-weight: 700; color: #0F2D4A; }
+.km-card-desc { font-size: 10.5px; color: #94A3B8; margin-top: 1px; }
+.km-card-body { display: grid; grid-template-columns: 1fr 1fr; }
+.km-period-col { padding: 14px 20px 16px; }
+.km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
+.km-period-lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94A3B8; margin-bottom: 7px; }
+.km-actual-num { font-size: 26px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 9px; }
+.km-trend { display: flex; align-items: center; gap: 5px; margin-bottom: 9px; flex-wrap: wrap; }
+.km-trend-lbl { font-size: 10px; color: #94A3B8; }
+.km-badge { display: inline-flex; align-items: center; gap: 2px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.km-badge.up   { background: #DCFCE7; color: #15803D; }
+.km-badge.down { background: #FEE2E2; color: #B91C1C; }
+.km-badge.flat { background: #F1F5F9; color: #64748B; }
+.km-py-val { font-size: 9.5px; color: #CBD5E1; }
+.km-bgt-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.km-bgt-lbl { font-size: 10px; color: #94A3B8; }
+.km-bgt-pct { font-size: 12px; font-weight: 700; }
+.km-bar { height: 7px; background: #F1F5F9; border-radius: 4px; overflow: hidden; }
+.km-bar-inner { height: 100%; border-radius: 4px; }
+.km-bar-inner.ok   { background: linear-gradient(90deg,#34D399,#10B981); }
+.km-bar-inner.warn { background: linear-gradient(90deg,#FCD34D,#F59E0B); }
+.km-bar-inner.bad  { background: linear-gradient(90deg,#F87171,#EF4444); }
+.km-extra { margin-top: 10px; }
+.km-mini-bars { display: flex; align-items: flex-end; gap: 4px; height: 40px; }
+.km-bar-leg { display: flex; align-items: center; gap: 10px; font-size: 9px; color: #94A3B8; margin-top: 5px; flex-wrap: wrap; }
+.km-bar-leg span { display: flex; align-items: center; gap: 3px; }
+.km-bar-leg-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+.km-rev-row { display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; padding: 3px 0; color: #64748B; }
+.km-rev-row + .km-rev-row { border-top: 1px solid #F8FAFC; }
+.km-scale-track { height: 10px; border-radius: 5px; background: linear-gradient(90deg,#FEE2E2 0%,#FEF9C3 38%,#DCFCE7 68%,#DCFCE7 100%); position: relative; }
+.km-scale-leg { display: flex; gap: 10px; font-size: 9px; color: #94A3B8; margin-top: 5px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -313,7 +370,12 @@ table.sched-table { border-collapse: collapse; width: 100%; }
   </div>
 </header>
 
-<div class="layout">
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabSchedule" onclick="switchTab('schedule')">Vet Scheduler</button>
+  <button class="tab-btn" id="tabMetrics" onclick="switchTab('metrics')">Key Metrics</button>
+</div>
+
+<div class="layout" id="schedulerLayout">
   <aside class="sidebar">
     <div class="sidebar-body">
       <button class="add-person-btn" id="addDvmBtn" onclick="openAddModal('dvm')">+ Add DVM</button>
@@ -345,12 +407,37 @@ table.sched-table { border-collapse: collapse; width: 100%; }
           <span class="setting-unit">%</span>
         </div>
       </div>
+      <div class="setting-row">
+        <label class="setting-label">Weekly visit target</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtWeekVisits" min="0" step="1"
+                 onchange="setWeeklyTarget('weeklyVisitTarget', this.value)">
+          <span class="setting-unit">visits</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label class="setting-label">Weekly revenue target</label>
+        <div class="setting-input-row">
+          <input type="number" class="setting-input" id="tgtWeekRevenue" min="0" step="1000"
+                 onchange="setWeeklyTarget('weeklyRevenueTarget', this.value)">
+          <span class="setting-unit">$</span>
+        </div>
+      </div>
     </div>
   </aside>
 
   <main class="schedule-main">
     <div class="sched-wrap" id="schedWrap"></div>
   </main>
+</div>
+
+<!-- KEY METRICS PANEL -->
+<div class="metrics-panel" id="metricsPanel" style="display:none">
+  <div class="km-topbar">
+    <span class="km-topbar-title">&#128202; Key Metrics</span>
+    <span class="km-period-chip" id="kmPeriodChip"></span>
+  </div>
+  <div class="km-grid" id="kmGrid"></div>
 </div>
 
 <!-- ADD PERSON MODAL -->
@@ -380,7 +467,7 @@ let locationId  = null;
 let allLocations = [];
 let isReadOnly  = false;
 let S = {
-  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5, supportCompPctTarget: 30 },
+  targets: { visitsPerDVMHour: 2.5, supportPerDVMHour: 1.5, supportCompPctTarget: 30, weeklyVisitTarget: 0, weeklyRevenueTarget: 0 },
   dvms: [], staff: [], schedule: {}, weekOffset: 0, uid: 1,
 };
 let dirtyDates = new Set();
@@ -464,20 +551,25 @@ function weekMetricsCell() {
   const wvCls  = ratioClass(wm.vRatio, S.targets.visitsPerDVMHour, false);
   const wsCls  = ratioClass(wm.sRatio, S.targets.supportPerDVMHour, true);
   const wscCls = ratioClass(wm.scPct,  S.targets.supportCompPctTarget, true);
-  const tgtVis = wm.tgtVis !== null ? Math.round(wm.tgtVis) : null;
-  const visDiff = tgtVis !== null ? wm.vis - tgtVis : null;
-  const diffStr = visDiff !== null
-    ? `<span class="${visDiff >= 0 ? 'vis-diff-pos' : 'vis-diff-neg'}">${visDiff >= 0 ? '+' : ''}${Math.round(visDiff)}</span>`
+  const fmtMoney = v => '$' + Math.round(Math.abs(v)).toLocaleString();
+  const fmtDiff  = (d, fmt) => `<span class="${d >= 0 ? 'vis-diff-pos' : 'vis-diff-neg'}">${d >= 0 ? '+' : '−'}${fmt(Math.abs(d))}</span>`;
+
+  const wkVisTgt = S.targets.weeklyVisitTarget  || 0;
+  const wkRevTgt = S.targets.weeklyRevenueTarget || 0;
+  const visLine = wkVisTgt > 0
+    ? `<div class="wk-tgt-line"><span class="wk-tgt-lbl">Visits</span> <span class="mc-t">${wm.vis}</span> / ${wkVisTgt} &nbsp;${fmtDiff(wm.vis - wkVisTgt, v => Math.round(v))}</div>`
     : '';
+  const revLine = wkRevTgt > 0
+    ? `<div class="wk-tgt-line"><span class="wk-tgt-lbl">Revenue</span> <span class="mc-t">${fmtMoney(wm.rev)}</span> / ${fmtMoney(wkRevTgt)} &nbsp;${fmtDiff(wm.rev - wkRevTgt, fmtMoney)}</div>`
+    : '';
+
   return `<td class="week-metrics-cell">
     <div class="mc-totals">
       <span><span class="mc-t">${wm.dvmH}</span>h DVM</span>
       <span style="color:#CBD5E1">&middot;</span>
       <span><span class="mc-t">${wm.supH}</span>h Sup</span>
-      <span style="color:#CBD5E1">&middot;</span>
-      <span><span class="mc-t">${wm.vis}</span> visits</span>
     </div>
-    ${tgtVis !== null ? `<div class="wk-vis-tgt">Target: ${tgtVis} visits &nbsp;${diffStr}</div>` : ''}
+    ${visLine}${revLine}
     <div class="mc-ratios">
       <div class="mc-ratio ${wvCls}" title="Target: ${S.targets.visitsPerDVMHour} visits/DVM-hr">
         <span class="mc-ratio-val">${wvStr}</span>
@@ -522,9 +614,11 @@ async function loadSchedule() {
       expectedRevenue: day.expectedRevenue || 0,
     };
   });
-  S.targets.visitsPerDVMHour    = data.settings.visits_per_dvm_hour;
-  S.targets.supportPerDVMHour   = data.settings.support_per_dvm_hour;
+  S.targets.visitsPerDVMHour     = data.settings.visits_per_dvm_hour;
+  S.targets.supportPerDVMHour    = data.settings.support_per_dvm_hour;
   S.targets.supportCompPctTarget = data.settings.support_comp_pct_target || 30;
+  S.targets.weeklyVisitTarget    = data.settings.weekly_visit_target  || 0;
+  S.targets.weeklyRevenueTarget  = data.settings.weekly_revenue_target || 0;
 }
 
 // ── SAVE ───────────────────────────────────────────────────
@@ -551,7 +645,7 @@ async function saveSettings() {
   if (isReadOnly) return;
   await fetch(`/api/locations/${locationId}/settings`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ visitsPerDVMHour:S.targets.visitsPerDVMHour, supportPerDVMHour:S.targets.supportPerDVMHour, supportCompPctTarget:S.targets.supportCompPctTarget }),
+    body: JSON.stringify({ visitsPerDVMHour:S.targets.visitsPerDVMHour, supportPerDVMHour:S.targets.supportPerDVMHour, supportCompPctTarget:S.targets.supportCompPctTarget, weeklyVisitTarget:S.targets.weeklyVisitTarget, weeklyRevenueTarget:S.targets.weeklyRevenueTarget }),
   });
 }
 
@@ -559,9 +653,11 @@ async function saveSettings() {
 
 function renderAll() {
   document.getElementById('weekLabel').textContent = weekLabel();
-  document.getElementById('tgtVisits').value     = S.targets.visitsPerDVMHour;
-  document.getElementById('tgtSupport').value    = S.targets.supportPerDVMHour;
-  document.getElementById('tgtSupCompPct').value = S.targets.supportCompPctTarget;
+  document.getElementById('tgtVisits').value      = S.targets.visitsPerDVMHour;
+  document.getElementById('tgtSupport').value     = S.targets.supportPerDVMHour;
+  document.getElementById('tgtSupCompPct').value  = S.targets.supportCompPctTarget;
+  document.getElementById('tgtWeekVisits').value  = S.targets.weeklyVisitTarget  || '';
+  document.getElementById('tgtWeekRevenue').value = S.targets.weeklyRevenueTarget || '';
   renderGrid();
 }
 
@@ -788,7 +884,7 @@ function personRow(person, type, dates) {
   if (totalOff   > 0) wkParts.push(`<span class="mc-t">${totalOff}</span>h Off`);
   row += `<td class="week-cell">
     <div class="week-hours">
-      ${wkParts.length ? wkParts.join('<br>') : '<span style="color:#CBD5E1">—</span>'}
+      ${wkParts.length ? wkParts.join(' <span style="color:#CBD5E1">&middot;</span> ') : '<span style="color:#CBD5E1">—</span>'}
     </div>
   </td>`;
   row += `</tr>`;
@@ -899,7 +995,7 @@ function refreshPersonStats(type, personId) {
     if (totalWork  > 0) wkParts.push(`<span class="mc-t">${totalWork}</span>h Reg`);
     if (totalBreak > 0) wkParts.push(`<span class="mc-t">${totalBreak}</span>h OT`);
     if (totalOff   > 0) wkParts.push(`<span class="mc-t">${totalOff}</span>h Off`);
-    weekCell.querySelector('.week-hours').innerHTML = wkParts.length ? wkParts.join('<br>') : '<span style="color:#CBD5E1">—</span>';
+    weekCell.querySelector('.week-hours').innerHTML = wkParts.length ? wkParts.join(' <span style="color:#CBD5E1">&middot;</span> ') : '<span style="color:#CBD5E1">—</span>';
   }
 }
 
@@ -921,6 +1017,11 @@ async function deletePersonFromPool(type, id, e) {
 
 function setTarget(key, val) {
   S.targets[key] = Math.max(0.1, parseFloat(val)||1);
+  saveSettings(); renderGrid();
+}
+
+function setWeeklyTarget(key, val) {
+  S.targets[key] = Math.max(0, parseFloat(val)||0);
   saveSettings(); renderGrid();
 }
 
@@ -1054,6 +1155,200 @@ async function init() {
 }
 
 init();
+
+// ── KEY METRICS ─────────────────────────────────────────────
+
+function switchTab(tab) {
+  document.getElementById('schedulerLayout').style.display = tab === 'schedule' ? 'flex' : 'none';
+  const mp = document.getElementById('metricsPanel');
+  mp.style.display = tab === 'metrics' ? 'flex' : 'none';
+  document.getElementById('tabSchedule').classList.toggle('active', tab === 'schedule');
+  document.getElementById('tabMetrics').classList.toggle('active', tab === 'metrics');
+  if (tab === 'metrics') renderMetrics();
+}
+
+// Dummy data keyed by 0-based location index (cycles for any number of locations)
+const KM_DATA = [
+  {
+    visits:  { mtd:{actual:412, py:387, budget:425},  ytd:{actual:3240, py:2980, budget:3400} },
+    atc:     { mtd:{actual:185.50, py:172.00, budget:180.00}, ytd:{actual:179.80, py:168.50, budget:182.00} },
+    revenue: { mtd:{actual:76428,  py:66564,  budget:76500},  ytd:{actual:582552, py:501690, budget:618800} },
+    margin:  { mtd:{actual:28.4, py:26.1, budget:30.0}, ytd:{actual:27.9, py:25.8, budget:30.0} },
+  },
+  {
+    visits:  { mtd:{actual:538, py:501, budget:520},  ytd:{actual:4210, py:3890, budget:4100} },
+    atc:     { mtd:{actual:198.20, py:182.00, budget:195.00}, ytd:{actual:193.40, py:178.00, budget:196.00} },
+    revenue: { mtd:{actual:106632, py:91182,  budget:101400}, ytd:{actual:813814, py:693420, budget:803600} },
+    margin:  { mtd:{actual:31.2, py:28.9, budget:32.0}, ytd:{actual:30.5, py:28.2, budget:32.0} },
+  },
+  {
+    visits:  { mtd:{actual:289, py:312, budget:305},  ytd:{actual:2310, py:2490, budget:2440} },
+    atc:     { mtd:{actual:162.80, py:158.50, budget:170.00}, ytd:{actual:159.40, py:154.20, budget:168.00} },
+    revenue: { mtd:{actual:47049,  py:49452,  budget:51850},  ytd:{actual:368214, py:383718, budget:409920} },
+    margin:  { mtd:{actual:24.1, py:25.8, budget:27.0}, ytd:{actual:23.8, py:25.3, budget:27.0} },
+  },
+];
+
+function kmData() {
+  const idx = (parseInt(locationId) - 1 + KM_DATA.length) % KM_DATA.length;
+  return KM_DATA[idx];
+}
+
+// ── helpers ──
+function kmTrendBadge(actual, ref) {
+  const pct = (actual - ref) / ref * 100;
+  const abs = Math.abs(pct).toFixed(1);
+  if (Math.abs(pct) < 0.5) return `<span class="km-badge flat">→ ${abs}%</span>`;
+  return pct > 0
+    ? `<span class="km-badge up">&#8593; ${abs}%</span>`
+    : `<span class="km-badge down">&#8595; ${abs}%</span>`;
+}
+
+function kmBudgetBar(actual, budget) {
+  const pct = actual / budget * 100;
+  const cls = pct >= 98 ? 'ok' : pct >= 88 ? 'warn' : 'bad';
+  const color = pct >= 100 ? '#15803D' : pct >= 88 ? '#D97706' : '#B91C1C';
+  const fillW = Math.min(pct / 120 * 100, 100).toFixed(1);
+  return `<div class="km-bgt-top">
+    <span class="km-bgt-lbl">vs Budget</span>
+    <span class="km-bgt-pct" style="color:${color}">${pct.toFixed(1)}%</span>
+  </div>
+  <div class="km-bar"><div class="km-bar-inner ${cls}" style="width:${fillW}%"></div></div>`;
+}
+
+function kmPeriodCol(label, d, fmtA, fmtPY, extra) {
+  return `<div class="km-period-col">
+    <div class="km-period-lbl">${label}</div>
+    <div class="km-actual-num">${fmtA(d.actual)}</div>
+    <div class="km-trend">
+      <span class="km-trend-lbl">vs Prior Year</span>
+      ${kmTrendBadge(d.actual, d.py)}
+      <span class="km-py-val">(${fmtPY(d.py)})</span>
+    </div>
+    ${kmBudgetBar(d.actual, d.budget)}
+    ${extra ? `<div class="km-extra">${extra}</div>` : ''}
+  </div>`;
+}
+
+// ── per-metric extra visuals ──
+function kmVisitsChart(d) {
+  const mx = Math.max(d.actual, d.py, d.budget) * 1.1;
+  const h = v => Math.round(v / mx * 38);
+  const actColor = d.actual >= d.budget ? '#10B981' : '#F87171';
+  return `<div class="km-mini-bars">
+    <div style="width:18px;height:${h(d.py)}px;background:#CBD5E1;border-radius:3px 3px 0 0" title="PY: ${Math.round(d.py)}"></div>
+    <div style="width:18px;height:${h(d.budget)}px;background:#93C5FD;border-radius:3px 3px 0 0" title="Budget: ${Math.round(d.budget)}"></div>
+    <div style="width:18px;height:${h(d.actual)}px;background:${actColor};border-radius:3px 3px 0 0" title="Actual: ${Math.round(d.actual)}"></div>
+  </div>
+  <div class="km-bar-leg">
+    <span><span class="km-bar-leg-dot" style="background:#CBD5E1"></span>PY</span>
+    <span><span class="km-bar-leg-dot" style="background:#93C5FD"></span>Budget</span>
+    <span><span class="km-bar-leg-dot" style="background:${actColor}"></span>Actual</span>
+  </div>`;
+}
+
+function kmAtcBullet(d) {
+  const lo = Math.min(d.actual, d.py, d.budget) * 0.93;
+  const hi = Math.max(d.actual, d.py, d.budget) * 1.07;
+  const pos = v => Math.max(2, Math.min(96, ((v - lo) / (hi - lo) * 100))).toFixed(1);
+  const actColor = d.actual >= d.budget ? '#10B981' : '#EF4444';
+  return `<div style="position:relative;height:28px;">
+    <div style="height:8px;background:#F1F5F9;border-radius:4px;margin-top:6px;position:relative;">
+      <div style="position:absolute;left:${pos(d.py)}%;width:3px;height:16px;top:-4px;background:#CBD5E1;border-radius:2px;transform:translateX(-50%)" title="PY"></div>
+      <div style="position:absolute;left:${pos(d.budget)}%;width:3px;height:16px;top:-4px;background:#93C5FD;border-radius:2px;transform:translateX(-50%)" title="Budget"></div>
+      <div style="position:absolute;left:${pos(d.actual)}%;width:10px;height:10px;top:-1px;background:${actColor};border-radius:50%;transform:translateX(-50%)" title="Actual"></div>
+    </div>
+  </div>
+  <div class="km-bar-leg">
+    <span><span class="km-bar-leg-dot" style="background:#CBD5E1"></span>PY</span>
+    <span><span class="km-bar-leg-dot" style="background:#93C5FD"></span>Budget</span>
+    <span><span class="km-bar-leg-dot" style="background:${actColor};border-radius:50%"></span>Actual</span>
+  </div>`;
+}
+
+function kmRevenueTable(d) {
+  const fmt = v => '$' + Math.round(v).toLocaleString();
+  const actColor = d.actual >= d.budget ? '#15803D' : '#B91C1C';
+  return `<div>
+    <div class="km-rev-row"><span style="color:#94A3B8">Prior Year</span><span style="font-weight:600;color:#94A3B8">${fmt(d.py)}</span></div>
+    <div class="km-rev-row"><span style="color:#60A5FA">Budget</span><span style="font-weight:600;color:#60A5FA">${fmt(d.budget)}</span></div>
+    <div class="km-rev-row" style="font-weight:700"><span style="color:#1E293B">Actual</span><span style="color:${actColor}">${fmt(d.actual)}</span></div>
+  </div>`;
+}
+
+function kmMarginScale(d) {
+  const lo = Math.min(d.actual, d.py, d.budget) - 4;
+  const hi = Math.max(d.actual, d.py, d.budget) + 4;
+  const pos = v => Math.max(2, Math.min(96, ((v - lo) / (hi - lo) * 100))).toFixed(1);
+  const actColor = d.actual >= d.budget ? '#15803D' : '#B91C1C';
+  return `<div class="km-scale-track">
+    <div style="position:absolute;left:${pos(d.py)}%;width:3px;height:18px;top:-4px;background:#94A3B8;border-radius:2px;transform:translateX(-50%)" title="PY ${d.py}%"></div>
+    <div style="position:absolute;left:${pos(d.budget)}%;width:3px;height:18px;top:-4px;background:#60A5FA;border-radius:2px;transform:translateX(-50%)" title="Budget ${d.budget}%"></div>
+    <div style="position:absolute;left:${pos(d.actual)}%;width:10px;height:18px;top:-4px;background:#0F2D4A;border-radius:3px;transform:translateX(-50%)" title="Actual ${d.actual}%"></div>
+  </div>
+  <div class="km-scale-leg">
+    <span><span class="km-bar-leg-dot km-bar-leg-dot" style="background:#94A3B8;display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:2px"></span>PY ${d.py}%</span>
+    <span><span style="background:#60A5FA;display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:2px"></span>Budget ${d.budget}%</span>
+    <span><span style="background:${actColor};display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:2px"></span>Actual ${d.actual}%</span>
+  </div>`;
+}
+
+// ── main render ──
+function renderMetrics() {
+  const d = kmData();
+  const now = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('kmPeriodChip').textContent =
+    `${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  const fmtInt   = v => Math.round(v).toLocaleString();
+  const fmtDol2  = v => '$' + v.toFixed(2);
+  const fmtDol0  = v => '$' + Math.round(v).toLocaleString();
+  const fmtPct   = v => v.toFixed(1) + '%';
+
+  const cards = [
+    {
+      icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE',
+      name:'Patient Visits', desc:'Total patient encounters per period',
+      m: d.visits, fmtA: fmtInt, fmtPY: fmtInt,
+      extraFn: kmVisitsChart,
+    },
+    {
+      icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE',
+      name:'ATC', desc:'Average transaction charge per visit',
+      m: d.atc, fmtA: fmtDol2, fmtPY: fmtDol2,
+      extraFn: kmAtcBullet,
+    },
+    {
+      icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7',
+      name:'Revenue', desc:'Total collected revenue',
+      m: d.revenue, fmtA: fmtDol0, fmtPY: fmtDol0,
+      extraFn: kmRevenueTable,
+    },
+    {
+      icon:'📈', bg:'#FFF7ED', iconBg:'#FFEDD5',
+      name:'Margin', desc:'Operating margin as % of revenue',
+      m: d.margin, fmtA: fmtPct, fmtPY: fmtPct,
+      extraFn: kmMarginScale,
+    },
+  ];
+
+  document.getElementById('kmGrid').innerHTML = cards.map(c => `
+    <div class="km-card">
+      <div class="km-card-hdr" style="background:${c.bg}">
+        <div class="km-icon" style="background:${c.iconBg}">${c.icon}</div>
+        <div>
+          <div class="km-card-name">${c.name}</div>
+          <div class="km-card-desc">${c.desc}</div>
+        </div>
+      </div>
+      <div class="km-card-body">
+        ${kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, c.extraFn(c.m.mtd))}
+        ${kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, c.extraFn(c.m.ytd))}
+      </div>
+    </div>
+  `).join('');
+}
 </script>
 </body>
 </html>
