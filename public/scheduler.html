@@ -1205,9 +1205,9 @@ function kmVsBudgetInd(actual, budget) {
   const diff = pct - 100;
   const sign = diff >= 0 ? '+' : '';
   let icon, cls;
-  if (pct >= 100)     { icon = '🏆'; cls = 'ok'; }
-  else if (pct >= 88) { icon = '⚡'; cls = 'warn'; }
-  else                { icon = '🚨'; cls = 'bad'; }
+  if (pct >= 100)     { icon = '🌡️'; cls = 'ok'; }
+  else if (pct >= 88) { icon = '🌡️'; cls = 'warn'; }
+  else                { icon = '🌡️'; cls = 'bad'; }
   return `<div class="km-trio-ind ${cls}">${icon} ${sign}${diff.toFixed(1)}%</div>`;
 }
 
@@ -1216,10 +1216,10 @@ function kmVsPYInd(actual, py) {
   const abs = Math.abs(pct).toFixed(1);
   const sign = pct >= 0 ? '+' : '−';
   let icon, cls;
-  if (pct > 10)       { icon = '🚀'; cls = 'up'; }
-  else if (pct > 2)   { icon = '📈'; cls = 'up'; }
-  else if (pct >= -2) { icon = '➡️'; cls = 'flat'; }
-  else                { icon = '📉'; cls = 'down'; }
+  if (pct > 10)       { icon = '🔢'; cls = 'up'; }
+  else if (pct > 2)   { icon = '🔢'; cls = 'up'; }
+  else if (pct >= -2) { icon = '🔢'; cls = 'flat'; }
+  else                { icon = '🔢'; cls = 'down'; }
   return `<div class="km-trio-ind ${cls}">${icon} ${sign}${abs}%</div>`;
 }
 
@@ -1250,7 +1250,6 @@ function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml) {
         ${kmVsPYInd(d.actual, d.py)}
       </div>
     </div>
-    ${kmBudgetBar(d.actual, d.budget)}
     ${neededHtml}
   </div>`;
 }
@@ -1263,14 +1262,14 @@ function kmNeededHtml(d, metricKey) {
     const needed = d.visits.mtd.budget - d.visits.mtd.actual;
     if (needed <= 0) return `<div class="km-needed km-needed-met">&#10003; Visit budget met</div>`;
     const perDay = daysLeft > 0 ? `&thinsp;(${(needed / daysLeft).toFixed(1)}/day,&thinsp;${daysLeft}d left)` : '';
-    return `<div class="km-needed">Need <strong>${Math.round(needed)}</strong> more visits${perDay}</div>`;
+    return `<div class="km-needed">Need <strong>${Math.round(needed)}</strong> more visits${perDay} to meet budget</div>`;
   }
 
   if (metricKey === 'revenue') {
     const needed = d.revenue.mtd.budget - d.revenue.mtd.actual;
     if (needed <= 0) return `<div class="km-needed km-needed-met">&#10003; Revenue budget met</div>`;
     const perDay = daysLeft > 0 ? `&thinsp;($${Math.round(needed / daysLeft).toLocaleString()}/day,&thinsp;${daysLeft}d left)` : '';
-    return `<div class="km-needed">Need <strong>$${Math.round(needed).toLocaleString()}</strong> more${perDay}</div>`;
+    return `<div class="km-needed">Need <strong>$${Math.round(needed).toLocaleString()}</strong> more${perDay} to meet budget</div>`;
   }
 
   if (metricKey === 'atc') {
@@ -1279,13 +1278,13 @@ function kmNeededHtml(d, metricKey) {
     if (remVisits <= 0 || remRevenue <= 0)
       return `<div class="km-needed km-needed-met">&#10003; ATC on track</div>`;
     const atcNeeded = remRevenue / remVisits;
-    return `<div class="km-needed">Need <strong>$${atcNeeded.toFixed(2)}</strong> ATC on remaining <strong>${Math.round(remVisits)}</strong> visits</div>`;
+    return `<div class="km-needed">Need <strong>$${atcNeeded.toFixed(2)}</strong> ATC on remaining <strong>${Math.round(remVisits)}</strong> visits to meet budget</div>`;
   }
 
   if (metricKey === 'margin') {
     const needed = d.margin.mtd.budget - d.margin.mtd.actual;
     if (needed <= 0) return `<div class="km-needed km-needed-met">&#10003; Margin budget met</div>`;
-    return `<div class="km-needed">Need <strong>+${needed.toFixed(1)}pp</strong> more margin to hit budget</div>`;
+    return `<div class="km-needed">Need <strong>+${needed.toFixed(1)}pp</strong> more margin to meet budget</div>`;
   }
 
   return '';
