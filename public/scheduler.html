@@ -316,23 +316,25 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-card-name { font-size: 14px; font-weight: 700; color: #0F2D4A; }
 .km-card-desc { font-size: 10.5px; color: #94A3B8; margin-top: 1px; }
 .km-card-body { display: grid; grid-template-columns: 1fr 1fr; }
-.km-period-col { padding: 14px 20px 16px; }
+.km-period-col { padding: 14px 16px 16px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
-.km-period-lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94A3B8; margin-bottom: 7px; }
-.km-actual-num { font-size: 26px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 3px; }
-.km-stat-block { margin-bottom: 12px; }
-.km-stat-sublbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #94A3B8; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
-.km-py-num { color: #64748B; }
+.km-period-lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94A3B8; margin-bottom: 8px; }
+.km-trio { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-bottom: 10px; }
+.km-trio-cell { text-align: center; padding: 4px 2px; }
+.km-trio-lbl { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94A3B8; margin-bottom: 4px; }
+.km-trio-val { font-size: 15px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.km-trio-py { color: #64748B; }
+.km-trio-spacer { height: 22px; }
+.km-trio-ind { font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 2px; padding: 2px 5px; border-radius: 10px; margin: 0 auto; width: fit-content; }
+.km-trio-ind.ok   { background: #DCFCE7; color: #15803D; }
+.km-trio-ind.warn { background: #FEF9C3; color: #B45309; }
+.km-trio-ind.bad  { background: #FEE2E2; color: #B91C1C; }
+.km-trio-ind.up   { background: #DCFCE7; color: #15803D; }
+.km-trio-ind.flat { background: #F1F5F9; color: #64748B; }
+.km-trio-ind.down { background: #FEE2E2; color: #B91C1C; }
 .km-needed { margin-top: 9px; padding-top: 8px; border-top: 1px solid #F1F5F9; font-size: 11.5px; color: #64748B; line-height: 1.5; }
 .km-needed strong { color: #0F2D4A; font-weight: 700; }
 .km-needed-met { color: #15803D; font-weight: 600; }
-.km-badge { display: inline-flex; align-items: center; gap: 2px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-.km-badge.up   { background: #DCFCE7; color: #15803D; }
-.km-badge.down { background: #FEE2E2; color: #B91C1C; }
-.km-badge.flat { background: #F1F5F9; color: #64748B; }
-.km-bgt-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.km-bgt-lbl { font-size: 10px; color: #94A3B8; }
-.km-bgt-pct { font-size: 12px; font-weight: 700; }
 .km-bar { height: 7px; background: #F1F5F9; border-radius: 4px; overflow: hidden; }
 .km-bar-inner { height: 100%; border-radius: 4px; }
 .km-bar-inner.ok   { background: linear-gradient(90deg,#34D399,#10B981); }
@@ -1198,37 +1200,55 @@ function kmData() {
 }
 
 // ── helpers ──
-function kmTrendBadge(actual, ref) {
-  const pct = (actual - ref) / ref * 100;
+function kmVsBudgetInd(actual, budget) {
+  const pct = actual / budget * 100;
+  const diff = pct - 100;
+  const sign = diff >= 0 ? '+' : '';
+  let icon, cls;
+  if (pct >= 100)     { icon = '🏆'; cls = 'ok'; }
+  else if (pct >= 88) { icon = '⚡'; cls = 'warn'; }
+  else                { icon = '🚨'; cls = 'bad'; }
+  return `<div class="km-trio-ind ${cls}">${icon} ${sign}${diff.toFixed(1)}%</div>`;
+}
+
+function kmVsPYInd(actual, py) {
+  const pct = (actual - py) / py * 100;
   const abs = Math.abs(pct).toFixed(1);
-  if (Math.abs(pct) < 0.5) return `<span class="km-badge flat">→ ${abs}%</span>`;
-  return pct > 0
-    ? `<span class="km-badge up">&#8593; ${abs}%</span>`
-    : `<span class="km-badge down">&#8595; ${abs}%</span>`;
+  const sign = pct >= 0 ? '+' : '−';
+  let icon, cls;
+  if (pct > 10)       { icon = '🚀'; cls = 'up'; }
+  else if (pct > 2)   { icon = '📈'; cls = 'up'; }
+  else if (pct >= -2) { icon = '➡️'; cls = 'flat'; }
+  else                { icon = '📉'; cls = 'down'; }
+  return `<div class="km-trio-ind ${cls}">${icon} ${sign}${abs}%</div>`;
 }
 
 function kmBudgetBar(actual, budget) {
   const pct = actual / budget * 100;
   const cls = pct >= 98 ? 'ok' : pct >= 88 ? 'warn' : 'bad';
-  const color = pct >= 100 ? '#15803D' : pct >= 88 ? '#D97706' : '#B91C1C';
   const fillW = Math.min(pct / 120 * 100, 100).toFixed(1);
-  return `<div class="km-bgt-top">
-    <span class="km-bgt-lbl">vs Budget</span>
-    <span class="km-bgt-pct" style="color:${color}">${pct.toFixed(1)}%</span>
-  </div>
-  <div class="km-bar"><div class="km-bar-inner ${cls}" style="width:${fillW}%"></div></div>`;
+  return `<div class="km-bar"><div class="km-bar-inner ${cls}" style="width:${fillW}%"></div></div>`;
 }
 
 function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml) {
   return `<div class="km-period-col">
     <div class="km-period-lbl">${label}</div>
-    <div class="km-stat-block">
-      <div class="km-stat-sublbl">Actual</div>
-      <div class="km-actual-num">${fmtA(d.actual)}</div>
-    </div>
-    <div class="km-stat-block">
-      <div class="km-stat-sublbl">Prior Year &nbsp;${kmTrendBadge(d.actual, d.py)}</div>
-      <div class="km-actual-num km-py-num">${fmtPY(d.py)}</div>
+    <div class="km-trio">
+      <div class="km-trio-cell">
+        <div class="km-trio-lbl">Actual</div>
+        <div class="km-trio-val">${fmtA(d.actual)}</div>
+        <div class="km-trio-spacer"></div>
+      </div>
+      <div class="km-trio-cell">
+        <div class="km-trio-lbl">Budget</div>
+        <div class="km-trio-val">${fmtA(d.budget)}</div>
+        ${kmVsBudgetInd(d.actual, d.budget)}
+      </div>
+      <div class="km-trio-cell">
+        <div class="km-trio-lbl">Prior Year</div>
+        <div class="km-trio-val km-trio-py">${fmtPY(d.py)}</div>
+        ${kmVsPYInd(d.actual, d.py)}
+      </div>
     </div>
     ${kmBudgetBar(d.actual, d.budget)}
     ${neededHtml}
