@@ -3,8 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-# Ensure the data directory exists; mount a volume here to persist the DB across deployments
+# data/ is excluded by .dockerignore; mount a Railway volume at /app/data to persist the DB
 RUN mkdir -p /app/data
-VOLUME ["/app/data"]
 EXPOSE 3000
 CMD ["node", "--experimental-sqlite", "server.js"]
