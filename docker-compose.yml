@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Named volume persists the SQLite DB across container rebuilds / deployments
+      - db_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  db_data:

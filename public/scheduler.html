@@ -316,46 +316,67 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-card-name { font-size: 14px; font-weight: 700; color: #0F2D4A; }
 .km-card-desc { font-size: 10.5px; color: #94A3B8; margin-top: 1px; }
 .km-card-body { display: grid; grid-template-columns: 1fr 1fr; }
+.km-card-body.single-col { grid-template-columns: 1fr; max-width: 320px; }
 .km-period-col { padding: 14px 16px 16px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
-.km-period-lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94A3B8; margin-bottom: 8px; }
-.km-trio { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-bottom: 10px; }
-.km-trio-cell { text-align: center; padding: 4px 2px; }
-.km-trio-lbl { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94A3B8; margin-bottom: 4px; }
-.km-trio-val { font-size: 15px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.km-trio-py { color: #64748B; }
-.km-trio-spacer { height: 22px; }
-.km-trio-ind { font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 2px; padding: 2px 5px; border-radius: 10px; margin: 0 auto; width: fit-content; }
-.km-trio-ind.ok   { background: #DCFCE7; color: #15803D; }
-.km-trio-ind.warn { background: #FEF9C3; color: #B45309; }
-.km-trio-ind.bad  { background: #FEE2E2; color: #B91C1C; }
-.km-trio-ind.up   { background: #DCFCE7; color: #15803D; }
-.km-trio-ind.flat { background: #F1F5F9; color: #64748B; }
-.km-trio-ind.down { background: #FEE2E2; color: #B91C1C; }
-.km-needed { margin-top: 9px; padding-top: 8px; border-top: 1px solid #F1F5F9; font-size: 11.5px; color: #64748B; line-height: 1.5; }
+.km-period-lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94A3B8; margin-bottom: 8px; text-align: center; }
+/* Gauge (odometer) */
+.km-gauge-wrap { text-align: center; margin-bottom: 8px; }
+.km-gauge-svg { width: 100%; max-width: 130px; display: block; margin: 0 auto 4px; }
+.km-gauge-pct { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.km-gauge-pct.ok   { background: #DCFCE7; color: #15803D; }
+.km-gauge-pct.warn { background: #FEF9C3; color: #B45309; }
+.km-gauge-pct.bad  { background: #FEE2E2; color: #B91C1C; }
+/* Bar chart (vs PY) */
+.km-barchart { text-align: center; margin-top: 10px; }
+.km-barchart-bars { display: flex; gap: 10px; justify-content: center; height: 56px; margin-bottom: 5px; align-items: flex-end; }
+.km-bc-col { display: flex; flex-direction: column; align-items: center; width: 44%; }
+.km-bc-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.km-bc-bar { width: 28px; margin: 0 auto; border-radius: 3px 3px 0 0; min-height: 4px; }
+.km-bc-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; color: #94A3B8; margin-top: 3px; }
+.km-bc-val { font-size: 8px; color: #64748B; font-weight: 600; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.km-bc-pct { font-size: 10.5px; font-weight: 700; }
+.km-bc-pct.up   { color: #15803D; }
+.km-bc-pct.down { color: #B91C1C; }
+.km-bc-pct.flat { color: #64748B; }
+/* Needed text */
+.km-needed { margin-top: 9px; padding-top: 8px; border-top: 1px solid #F1F5F9; font-size: 11px; color: #64748B; line-height: 1.5; }
 .km-needed strong { color: #0F2D4A; font-weight: 700; }
 .km-needed-met { color: #15803D; font-weight: 600; }
-.km-bar { height: 7px; background: #F1F5F9; border-radius: 4px; overflow: hidden; }
-.km-bar-inner { height: 100%; border-radius: 4px; }
-.km-bar-inner.ok   { background: linear-gradient(90deg,#34D399,#10B981); }
-.km-bar-inner.warn { background: linear-gradient(90deg,#FCD34D,#F59E0B); }
-.km-bar-inner.bad  { background: linear-gradient(90deg,#F87171,#EF4444); }
-.km-extra { margin-top: 10px; }
-.km-mini-bars { display: flex; align-items: flex-end; gap: 4px; height: 40px; }
-.km-bar-leg { display: flex; align-items: center; gap: 10px; font-size: 9px; color: #94A3B8; margin-top: 5px; flex-wrap: wrap; }
-.km-bar-leg span { display: flex; align-items: center; gap: 3px; }
-.km-bar-leg-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
-.km-rev-row { display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; padding: 3px 0; color: #64748B; }
-.km-rev-row + .km-rev-row { border-top: 1px solid #F8FAFC; }
-.km-scale-track { height: 10px; border-radius: 5px; background: linear-gradient(90deg,#FEE2E2 0%,#FEF9C3 38%,#DCFCE7 68%,#DCFCE7 100%); position: relative; }
-.km-scale-leg { display: flex; gap: 10px; font-size: 9px; color: #94A3B8; margin-top: 5px; flex-wrap: wrap; }
+/* Operational Metrics + DVM Productivity */
+.km-extra-section { background: white; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04); margin: 0 26px 20px; overflow: hidden; }
+.km-section-hdr { background: #F8FAFC; padding: 12px 20px; border-bottom: 1px solid #EEF2F7; display: flex; align-items: center; gap: 10px; }
+.km-section-icon { font-size: 18px; }
+.km-section-title { font-size: 14px; font-weight: 700; color: #0F2D4A; }
+.km-ops-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+.km-ops-tile { padding: 14px 16px; border-right: 1px solid #F4F6F9; text-align: center; }
+.km-ops-tile:last-child { border-right: none; }
+.km-ops-name { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94A3B8; margin-bottom: 6px; }
+.km-ops-val { font-size: 22px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 5px; }
+.km-ops-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.km-ops-badge.ok   { background: #DCFCE7; color: #15803D; }
+.km-ops-badge.warn { background: #FEF9C3; color: #B45309; }
+.km-ops-badge.bad  { background: #FEE2E2; color: #B91C1C; }
+.km-ops-goal { font-size: 9px; color: #94A3B8; margin-top: 3px; }
+/* DVM Productivity table */
+.km-dvm-wrap { padding: 16px 20px; overflow-x: auto; }
+.km-dvm-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.km-dvm-table th { text-align: left; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94A3B8; padding: 4px 10px 8px; }
+.km-dvm-table th.right { text-align: right; }
+.km-dvm-table td { padding: 7px 10px; border-top: 1px solid #F4F6F9; color: #334155; }
+.km-dvm-table td.right { text-align: right; }
+.km-dvm-table td.name { font-weight: 600; color: #0F2D4A; }
+.km-dvm-sparkbar { display: inline-block; height: 8px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+.km-dvm-pct { font-size: 10px; font-weight: 700; }
+.km-dvm-pct.ok   { color: #15803D; }
+.km-dvm-pct.warn { color: #B45309; }
+.km-dvm-pct.bad  { color: #B91C1C; }
 </style>
 </head>
 <body>
 
 <nav class="top-nav">
-  <a href="/scheduler.html" class="nav-link active">Schedule</a>
-  <span class="nav-sep" id="corpRollupSep" style="display:none">|</span>
+  <span class="nav-sep" id="corpRollupSep" style="display:none"></span>
   <a href="/corporate.html" class="nav-link" id="corpRollupLink" style="display:none">Corporate Rollup</a>
   <div class="nav-right">
     <span class="nav-user" id="navUser"></span>
@@ -364,7 +385,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 </nav>
 
 <header>
-  <h1>🐾 VetScheduler Pro</h1>
+  <h1>🏥 WVP Hospital Portal</h1>
   <span class="location-badge" id="locationBadge" style="display:none"></span>
   <select class="loc-selector" id="locationSelector" style="display:none" onchange="switchLocation(this.value)"></select>
   <div class="week-nav">
@@ -376,8 +397,8 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 </header>
 
 <div class="tab-bar">
-  <button class="tab-btn active" id="tabSchedule" onclick="switchTab('schedule')">Vet Scheduler</button>
-  <button class="tab-btn" id="tabMetrics" onclick="switchTab('metrics')">Key Metrics</button>
+  <button class="tab-btn active" id="tabSchedule" onclick="switchTab('schedule')">Hospital Scheduler</button>
+  <button class="tab-btn" id="tabMetrics" onclick="switchTab('metrics')">Hospital Dashboard</button>
 </div>
 
 <div class="layout" id="schedulerLayout">
@@ -439,10 +460,11 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 <!-- KEY METRICS PANEL -->
 <div class="metrics-panel" id="metricsPanel" style="display:none">
   <div class="km-topbar">
-    <span class="km-topbar-title">&#128202; Key Metrics</span>
+    <span class="km-topbar-title">&#127973; Hospital Dashboard</span>
     <span class="km-period-chip" id="kmPeriodChip"></span>
   </div>
   <div class="km-grid" id="kmGrid"></div>
+  <div id="kmExtras"></div>
 </div>
 
 <!-- ADD PERSON MODAL -->
@@ -1200,56 +1222,67 @@ function kmData() {
 }
 
 // ── helpers ──
-function kmVsBudgetInd(actual, budget) {
-  const pct = actual / budget * 100;
-  const diff = pct - 100;
-  const sign = diff >= 0 ? '+' : '';
-  let icon, cls;
-  if (pct >= 100)     { icon = '🌡️'; cls = 'ok'; }
-  else if (pct >= 88) { icon = '🌡️'; cls = 'warn'; }
-  else                { icon = '🌡️'; cls = 'bad'; }
-  return `<div class="km-trio-ind ${cls}">${icon} ${sign}${diff.toFixed(1)}%</div>`;
+
+// Semicircle gauge (odometer) showing actual vs budget
+function kmGaugeHtml(d, fmtA) {
+  const pct = d.actual / d.budget * 100;
+  // Arc fills proportionally; 120% of budget = full arc
+  const fill = Math.min(pct, 120) / 120 * 100;
+  const color = pct >= 100 ? '#10B981' : pct >= 88 ? '#F59E0B' : '#EF4444';
+  const cls   = pct >= 100 ? 'ok' : pct >= 88 ? 'warn' : 'bad';
+  const diff  = pct - 100;
+  const sign  = diff >= 0 ? '+' : '';
+  const actualTxt = fmtA(d.actual);
+  const budgetTxt = fmtA(d.budget);
+  // Compute arc endpoint for the fill path using pathLength trick
+  return `<div class="km-gauge-wrap">
+    <svg viewBox="0 0 100 58" class="km-gauge-svg">
+      <path d="M12,52 A38,38 0 0,1 88,52" fill="none" stroke="#E8EDF4" stroke-width="9" stroke-linecap="round" pathLength="100"/>
+      <path d="M12,52 A38,38 0 0,1 88,52" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
+            pathLength="100" stroke-dasharray="${fill.toFixed(1)} 100" stroke-dashoffset="0"/>
+      <text x="50" y="43" text-anchor="middle" font-size="13" font-weight="800" fill="#0F2D4A" font-family="system-ui,sans-serif">${actualTxt}</text>
+      <text x="50" y="52" text-anchor="middle" font-size="5.5" fill="#94A3B8" font-family="system-ui,sans-serif">of ${budgetTxt}</text>
+    </svg>
+    <span class="km-gauge-pct ${cls}">${sign}${diff.toFixed(1)}% vs Budget</span>
+  </div>`;
 }
 
-function kmVsPYInd(actual, py) {
-  const pct = (actual - py) / py * 100;
-  const abs = Math.abs(pct).toFixed(1);
+// Vertical bar chart showing actual vs prior year
+function kmPYBarsHtml(d, fmtA, fmtPY) {
+  const pct  = (d.actual - d.py) / d.py * 100;
+  const abs  = Math.abs(pct).toFixed(1);
   const sign = pct >= 0 ? '+' : '−';
-  let icon, cls;
-  if (pct > 10)       { icon = '🔢'; cls = 'up'; }
-  else if (pct > 2)   { icon = '🔢'; cls = 'up'; }
-  else if (pct >= -2) { icon = '🔢'; cls = 'flat'; }
-  else                { icon = '🔢'; cls = 'down'; }
-  return `<div class="km-trio-ind ${cls}">${icon} ${sign}${abs}%</div>`;
-}
-
-function kmBudgetBar(actual, budget) {
-  const pct = actual / budget * 100;
-  const cls = pct >= 98 ? 'ok' : pct >= 88 ? 'warn' : 'bad';
-  const fillW = Math.min(pct / 120 * 100, 100).toFixed(1);
-  return `<div class="km-bar"><div class="km-bar-inner ${cls}" style="width:${fillW}%"></div></div>`;
+  const cls  = pct > 2 ? 'up' : pct >= -2 ? 'flat' : 'down';
+  const MAX_PX = 44;
+  const max = Math.max(d.actual, d.py);
+  const actualH = Math.round(d.actual / max * MAX_PX);
+  const pyH     = Math.round(d.py     / max * MAX_PX);
+  return `<div class="km-barchart">
+    <div class="km-barchart-bars">
+      <div class="km-bc-col">
+        <div class="km-bc-bar-wrap">
+          <div class="km-bc-bar" style="height:${actualH}px;background:#3B82F6"></div>
+        </div>
+        <div class="km-bc-lbl">Actual</div>
+        <div class="km-bc-val">${fmtA(d.actual)}</div>
+      </div>
+      <div class="km-bc-col">
+        <div class="km-bc-bar-wrap">
+          <div class="km-bc-bar" style="height:${pyH}px;background:#CBD5E1"></div>
+        </div>
+        <div class="km-bc-lbl">Pr. Year</div>
+        <div class="km-bc-val">${fmtPY(d.py)}</div>
+      </div>
+    </div>
+    <div class="km-bc-pct ${cls}">${sign}${abs}% vs Prior Year</div>
+  </div>`;
 }
 
 function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml) {
   return `<div class="km-period-col">
     <div class="km-period-lbl">${label}</div>
-    <div class="km-trio">
-      <div class="km-trio-cell">
-        <div class="km-trio-lbl">Actual</div>
-        <div class="km-trio-val">${fmtA(d.actual)}</div>
-        <div class="km-trio-spacer"></div>
-      </div>
-      <div class="km-trio-cell">
-        <div class="km-trio-lbl">Budget</div>
-        <div class="km-trio-val">${fmtA(d.budget)}</div>
-        ${kmVsBudgetInd(d.actual, d.budget)}
-      </div>
-      <div class="km-trio-cell">
-        <div class="km-trio-lbl">Prior Year</div>
-        <div class="km-trio-val km-trio-py">${fmtPY(d.py)}</div>
-        ${kmVsPYInd(d.actual, d.py)}
-      </div>
-    </div>
+    ${kmGaugeHtml(d, fmtA)}
+    ${kmPYBarsHtml(d, fmtA, fmtPY)}
     ${neededHtml}
   </div>`;
 }
@@ -1264,35 +1297,147 @@ function kmNeededHtml(d, metricKey) {
     const perDay = daysLeft > 0 ? `&thinsp;(${(needed / daysLeft).toFixed(1)}/day,&thinsp;${daysLeft}d left)` : '';
     return `<div class="km-needed">Need <strong>${Math.round(needed)}</strong> more visits${perDay} to meet budget</div>`;
   }
-
   if (metricKey === 'revenue') {
     const needed = d.revenue.mtd.budget - d.revenue.mtd.actual;
     if (needed <= 0) return `<div class="km-needed km-needed-met">&#10003; Revenue budget met</div>`;
     const perDay = daysLeft > 0 ? `&thinsp;($${Math.round(needed / daysLeft).toLocaleString()}/day,&thinsp;${daysLeft}d left)` : '';
     return `<div class="km-needed">Need <strong>$${Math.round(needed).toLocaleString()}</strong> more${perDay} to meet budget</div>`;
   }
-
   if (metricKey === 'atc') {
-    const remVisits = d.visits.mtd.budget - d.visits.mtd.actual;
+    const remVisits  = d.visits.mtd.budget  - d.visits.mtd.actual;
     const remRevenue = d.revenue.mtd.budget - d.revenue.mtd.actual;
     if (remVisits <= 0 || remRevenue <= 0)
       return `<div class="km-needed km-needed-met">&#10003; ATC on track</div>`;
     const atcNeeded = remRevenue / remVisits;
     return `<div class="km-needed">Need <strong>$${atcNeeded.toFixed(2)}</strong> ATC on remaining <strong>${Math.round(remVisits)}</strong> visits to meet budget</div>`;
   }
+  return '';
+}
 
-  if (metricKey === 'margin') {
-    const needed = d.margin.mtd.budget - d.margin.mtd.actual;
-    if (needed <= 0) return `<div class="km-needed km-needed-met">&#10003; Margin budget met</div>`;
-    return `<div class="km-needed">Need <strong>+${needed.toFixed(1)}pp</strong> more margin to meet budget</div>`;
+// ── Operational Metrics dummy data ──
+const OPS_DATA = [
+  { orc:{actual:87,goal:90}, fwdBook:{actual:73,goal:75}, invoca:{actual:91,goal:92}, leadTime:{actual:4.2,goal:3.5}, onlineBook:{actual:34,goal:30} },
+  { orc:{actual:93,goal:90}, fwdBook:{actual:78,goal:75}, invoca:{actual:89,goal:92}, leadTime:{actual:3.1,goal:3.5}, onlineBook:{actual:41,goal:30} },
+  { orc:{actual:79,goal:90}, fwdBook:{actual:68,goal:75}, invoca:{actual:94,goal:92}, leadTime:{actual:5.8,goal:3.5}, onlineBook:{actual:27,goal:30} },
+];
+
+// ── DVM Productivity dummy data ──
+const DVM_PROD_DATA = [
+  {
+    dvms: [
+      { name:'Dr. Smith',    months:[{v:3.1,g:3.0},{v:2.8,g:3.0},{v:3.2,g:3.0}], mtd:{v:3.4,g:3.0} },
+      { name:'Dr. Johnson',  months:[{v:2.6,g:3.0},{v:2.9,g:3.0},{v:2.7,g:3.0}], mtd:{v:2.8,g:3.0} },
+      { name:'Dr. Williams', months:[{v:3.3,g:3.0},{v:3.5,g:3.0},{v:3.1,g:3.0}], mtd:{v:3.0,g:3.0} },
+    ]
+  },
+  {
+    dvms: [
+      { name:'Dr. Lee',   months:[{v:3.4,g:3.2},{v:3.1,g:3.2},{v:3.6,g:3.2}], mtd:{v:3.5,g:3.2} },
+      { name:'Dr. Chen',  months:[{v:2.9,g:3.2},{v:3.0,g:3.2},{v:2.8,g:3.2}], mtd:{v:3.1,g:3.2} },
+      { name:'Dr. Patel', months:[{v:3.3,g:3.2},{v:3.5,g:3.2},{v:3.2,g:3.2}], mtd:{v:3.3,g:3.2} },
+    ]
+  },
+  {
+    dvms: [
+      { name:'Dr. Garcia', months:[{v:2.7,g:2.8},{v:2.5,g:2.8},{v:2.9,g:2.8}], mtd:{v:2.6,g:2.8} },
+      { name:'Dr. Kim',    months:[{v:3.0,g:2.8},{v:2.8,g:2.8},{v:3.1,g:2.8}], mtd:{v:2.9,g:2.8} },
+      { name:'Dr. Brown',  months:[{v:2.4,g:2.8},{v:2.6,g:2.8},{v:2.5,g:2.8}], mtd:{v:2.4,g:2.8} },
+    ]
+  },
+];
+
+function opsData() {
+  const idx = (parseInt(locationId) - 1 + OPS_DATA.length) % OPS_DATA.length;
+  return OPS_DATA[idx];
+}
+function dvmProdData() {
+  const idx = (parseInt(locationId) - 1 + DVM_PROD_DATA.length) % DVM_PROD_DATA.length;
+  return DVM_PROD_DATA[idx];
+}
+
+function renderOpsSection(ops) {
+  function tile(name, actual, goal, fmt, lowerIsBetter) {
+    const pct    = lowerIsBetter ? goal / actual * 100 : actual / goal * 100;
+    const cls    = pct >= 100 ? 'ok' : pct >= 88 ? 'warn' : 'bad';
+    const diff   = lowerIsBetter ? goal - actual : actual - goal;
+    const sign   = diff >= 0 ? '+' : '';
+    const badge  = `${sign}${fmt(diff)} vs Goal`;
+    return `<div class="km-ops-tile">
+      <div class="km-ops-name">${name}</div>
+      <div class="km-ops-val">${fmt(actual)}</div>
+      <div class="km-ops-badge ${cls}">${badge}</div>
+      <div class="km-ops-goal">Goal: ${fmt(goal)}</div>
+    </div>`;
+  }
+  const fmtPct = v => v.toFixed(1) + '%';
+  const fmtDays = v => v.toFixed(1) + 'd';
+  return `<div class="km-extra-section">
+    <div class="km-section-hdr">
+      <span class="km-section-icon">⚙️</span>
+      <span class="km-section-title">Operational Metrics</span>
+    </div>
+    <div class="km-ops-grid">
+      ${tile('ORCs to Goal',           ops.orc.actual,      ops.orc.goal,      fmtPct,  false)}
+      ${tile('Forward Booking Rate',   ops.fwdBook.actual,  ops.fwdBook.goal,  fmtPct,  false)}
+      ${tile('Invoca Call Answer Rate',ops.invoca.actual,   ops.invoca.goal,   fmtPct,  false)}
+      ${tile('Lead Time to Book',      ops.leadTime.actual, ops.leadTime.goal, fmtDays, true)}
+      ${tile('Online Booking',         ops.onlineBook.actual,ops.onlineBook.goal,fmtPct,false)}
+    </div>
+  </div>`;
+}
+
+function renderDvmSection(prod) {
+  const now    = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Last 3 calendar months before current
+  const mo = now.getMonth();
+  const yr = now.getFullYear();
+  const colLabels = [-3,-2,-1].map(offset => {
+    const d = new Date(yr, mo + offset, 1);
+    return months[d.getMonth()];
+  });
+
+  function dvmPctCell(v, g) {
+    const pct = v / g * 100;
+    const cls = pct >= 100 ? 'ok' : pct >= 88 ? 'warn' : 'bad';
+    const barW = Math.min(pct, 120) / 120 * 40;
+    return `<td class="right">
+      <span class="km-dvm-sparkbar" style="width:${barW.toFixed(0)}px;background:${pct>=100?'#10B981':pct>=88?'#F59E0B':'#EF4444'}"></span>
+      <span class="km-dvm-pct ${cls}">${v.toFixed(1)}</span>
+    </td>`;
   }
 
-  return '';
+  const rows = prod.dvms.map(dvm => `<tr>
+    <td class="name">${dvm.name}</td>
+    ${dvm.months.map((m,i) => dvmPctCell(m.v, m.g)).join('')}
+    ${dvmPctCell(dvm.mtd.v, dvm.mtd.g)}
+    <td class="right" style="font-size:9.5px;color:#94A3B8">${dvm.mtd.g.toFixed(1)}</td>
+  </tr>`).join('');
+
+  return `<div class="km-extra-section">
+    <div class="km-section-hdr">
+      <span class="km-section-icon">🩺</span>
+      <span class="km-section-title">DVM Productivity &mdash; Visits / DVM Hour</span>
+    </div>
+    <div class="km-dvm-wrap">
+      <table class="km-dvm-table">
+        <thead><tr>
+          <th>DVM</th>
+          ${colLabels.map(l => `<th class="right">${l}</th>`).join('')}
+          <th class="right">MTD</th>
+          <th class="right">Goal</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
 }
 
 // ── main render ──
 function renderMetrics() {
-  const d = kmData();
+  const d   = kmData();
+  const ops = opsData();
+  const prod = dvmProdData();
   const now = new Date();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('kmPeriodChip').textContent =
@@ -1303,14 +1448,13 @@ function renderMetrics() {
   const fmtDol0 = v => '$' + Math.round(v).toLocaleString();
   const fmtPct  = v => v.toFixed(1) + '%';
 
-  const cards = [
-    { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters per period', metricKey:'visits',  m:d.visits,  fmtA:fmtInt,  fmtPY:fmtInt  },
-    { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Average transaction charge per visit', metricKey:'atc',  m:d.atc,     fmtA:fmtDol2, fmtPY:fmtDol2 },
-    { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',              metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0 },
-    { icon:'📈', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin',         desc:'Operating margin as % of revenue',    metricKey:'margin',  m:d.margin,  fmtA:fmtPct,  fmtPY:fmtPct  },
-  ];
-
-  document.getElementById('kmGrid').innerHTML = cards.map(c => `
+  // Visits, ATC, Revenue: MTD + YTD.  Margin: YTD only.
+  const cardsHtml = [
+    { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters', metricKey:'visits',  m:d.visits,  fmtA:fmtInt,  fmtPY:fmtInt,  ytdOnly:false },
+    { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Avg transaction charge',   metricKey:'atc',     m:d.atc,     fmtA:fmtDol2, fmtPY:fmtDol2, ytdOnly:false },
+    { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',  metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0, ytdOnly:false },
+    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin',         desc:'Operating margin % of rev',metricKey:'margin',  m:d.margin,  fmtA:fmtPct,  fmtPY:fmtPct,  ytdOnly:true  },
+  ].map(c => `
     <div class="km-card">
       <div class="km-card-hdr" style="background:${c.bg}">
         <div class="km-icon" style="background:${c.iconBg}">${c.icon}</div>
@@ -1319,12 +1463,16 @@ function renderMetrics() {
           <div class="km-card-desc">${c.desc}</div>
         </div>
       </div>
-      <div class="km-card-body">
-        ${kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey))}
+      <div class="km-card-body${c.ytdOnly ? ' single-col' : ''}">
+        ${c.ytdOnly ? '' : kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey))}
         ${kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '')}
       </div>
     </div>
   `).join('');
+
+  document.getElementById('kmGrid').innerHTML = cardsHtml;
+  document.getElementById('kmExtras').innerHTML =
+    renderOpsSection(ops) + renderDvmSection(prod);
 }
 </script>
 </body>
