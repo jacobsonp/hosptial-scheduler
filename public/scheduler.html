@@ -321,16 +321,18 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
 .km-period-body { display: flex; gap: 4px; align-items: flex-start; }
-/* Comparison bar chart (used for both vs-Budget and vs-PY) */
-.km-cmp-chart { flex: 1; min-width: 0; text-align: center; }
-.km-cmp-chart + .km-cmp-chart { border-left: 1px solid #F1F5F9; padding-left: 4px; }
-.km-barchart-bars { display: flex; gap: 3px; justify-content: center; height: 28px; margin-bottom: 2px; align-items: flex-end; }
-.km-bc-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
-.km-bc-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
-.km-bc-bar { width: 14px; margin: 0 auto; border-radius: 2px 2px 0 0; min-height: 3px; }
-.km-bc-lbl { font-size: 6.5px; font-weight: 700; text-transform: uppercase; color: #94A3B8; margin-top: 2px; }
-.km-bc-val { font-size: 7px; color: #64748B; font-weight: 600; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.km-bc-pct { font-size: 8px; font-weight: 700; text-align: center; margin-top: 1px; }
+/* Horizontal paired bar charts */
+.km-cmp-chart { flex: 1; min-width: 0; }
+.km-cmp-chart + .km-cmp-chart { border-left: 1px solid #F1F5F9; padding-left: 5px; }
+.km-hbar-group { margin-bottom: 2px; }
+.km-hbar-row { display: flex; align-items: center; gap: 3px; }
+.km-hbar-lbl { font-size: 6.5px; font-weight: 700; text-transform: uppercase; color: #94A3B8; width: 13px; flex-shrink: 0; text-align: right; }
+.km-hbar-track { flex: 1; height: 7px; background: #F1F5F9; overflow: hidden; }
+.km-hbar-top .km-hbar-track { border-radius: 2px 2px 0 0; }
+.km-hbar-bot .km-hbar-track { border-radius: 0 0 2px 2px; }
+.km-hbar-fill { height: 100%; }
+.km-hbar-val { font-size: 6.5px; color: #64748B; font-weight: 600; white-space: nowrap; flex-shrink: 0; text-align: right; max-width: 38px; overflow: hidden; text-overflow: ellipsis; }
+.km-bc-pct { font-size: 8px; font-weight: 700; }
 .km-bc-pct.up   { color: #15803D; }
 .km-bc-pct.down { color: #B91C1C; }
 .km-bc-pct.flat { color: #64748B; }
@@ -1218,32 +1220,27 @@ function kmData() {
 
 // ── helpers ──
 
-// Side-by-side bar chart comparing actual vs a reference value
+// Horizontal paired bar chart: Actual bar touching reference bar, both horizontal
 function kmCmpBars(actual, ref, fmtA, fmtRef, refLbl, pctLbl) {
-  const pct   = (actual - ref) / ref * 100;
-  const abs   = Math.abs(pct).toFixed(1);
-  const sign  = pct >= 0 ? '+' : '−';
-  const cls   = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+  const pct      = (actual - ref) / ref * 100;
+  const abs      = Math.abs(pct).toFixed(1);
+  const sign     = pct >= 0 ? '+' : '−';
+  const cls      = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
   const actColor = pct > 0 ? '#10B981' : pct < 0 ? '#EF4444' : '#94A3B8';
-  const MAX_PX = 24;
-  const max    = Math.max(actual, ref);
-  const actualH = Math.max(Math.round(actual / max * MAX_PX), 3);
-  const refH    = Math.max(Math.round(ref    / max * MAX_PX), 3);
+  const max      = Math.max(actual, ref);
+  const actualW  = (actual / max * 100).toFixed(1);
+  const refW     = (ref    / max * 100).toFixed(1);
   return `<div class="km-cmp-chart">
-    <div class="km-barchart-bars">
-      <div class="km-bc-col">
-        <div class="km-bc-bar-wrap">
-          <div class="km-bc-bar" style="height:${actualH}px;background:${actColor}"></div>
-        </div>
-        <div class="km-bc-lbl">Act</div>
-        <div class="km-bc-val">${fmtA(actual)}</div>
+    <div class="km-hbar-group">
+      <div class="km-hbar-row km-hbar-top">
+        <div class="km-hbar-lbl">Act</div>
+        <div class="km-hbar-track"><div class="km-hbar-fill" style="width:${actualW}%;background:${actColor}"></div></div>
+        <div class="km-hbar-val">${fmtA(actual)}</div>
       </div>
-      <div class="km-bc-col">
-        <div class="km-bc-bar-wrap">
-          <div class="km-bc-bar" style="height:${refH}px;background:#CBD5E1"></div>
-        </div>
-        <div class="km-bc-lbl">${refLbl}</div>
-        <div class="km-bc-val">${fmtRef(ref)}</div>
+      <div class="km-hbar-row km-hbar-bot">
+        <div class="km-hbar-lbl">${refLbl}</div>
+        <div class="km-hbar-track"><div class="km-hbar-fill" style="width:${refW}%;background:#CBD5E1"></div></div>
+        <div class="km-hbar-val">${fmtRef(ref)}</div>
       </div>
     </div>
     <div class="km-bc-pct ${cls}">${sign}${abs}% ${pctLbl}</div>
