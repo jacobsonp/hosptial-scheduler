@@ -317,29 +317,20 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-card-desc { font-size: 9px; color: #94A3B8; margin-top: 1px; }
 .km-card-body { display: grid; grid-template-columns: 1fr 1fr; }
 .km-card-body.single-col { grid-template-columns: 1fr; max-width: 260px; }
-.km-period-col { padding: 8px 10px 10px; }
+.km-period-col { padding: 5px 8px 6px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
-.km-period-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 5px; }
-.km-period-body { display: flex; gap: 6px; align-items: flex-end; }
-/* Thermometer (vs Budget) */
-.km-therm-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
-.km-therm-svg { width: 22px; }
-.km-therm-lbl { font-size: 8px; font-weight: 700; color: #94A3B8; white-space: nowrap; }
-.km-therm-val { font-size: 11px; font-weight: 800; color: #0F2D4A; line-height: 1; white-space: nowrap; }
-.km-therm-bgt { font-size: 7.5px; color: #94A3B8; white-space: nowrap; }
-.km-therm-pct { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; white-space: nowrap; }
-.km-therm-pct.ok   { background: #DCFCE7; color: #15803D; }
-.km-therm-pct.warn { background: #FEF9C3; color: #B45309; }
-.km-therm-pct.bad  { background: #FEE2E2; color: #B91C1C; }
-/* Bar chart (vs PY) */
-.km-barchart { flex: 1; min-width: 0; }
-.km-barchart-bars { display: flex; gap: 5px; justify-content: center; height: 40px; margin-bottom: 3px; align-items: flex-end; }
+.km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
+.km-period-body { display: flex; gap: 4px; align-items: flex-start; }
+/* Comparison bar chart (used for both vs-Budget and vs-PY) */
+.km-cmp-chart { flex: 1; min-width: 0; text-align: center; }
+.km-cmp-chart + .km-cmp-chart { border-left: 1px solid #F1F5F9; padding-left: 4px; }
+.km-barchart-bars { display: flex; gap: 3px; justify-content: center; height: 28px; margin-bottom: 2px; align-items: flex-end; }
 .km-bc-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
 .km-bc-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
-.km-bc-bar { width: 18px; margin: 0 auto; border-radius: 2px 2px 0 0; min-height: 3px; }
-.km-bc-lbl { font-size: 7px; font-weight: 700; text-transform: uppercase; color: #94A3B8; margin-top: 2px; }
-.km-bc-val { font-size: 7.5px; color: #64748B; font-weight: 600; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.km-bc-pct { font-size: 9px; font-weight: 700; text-align: center; }
+.km-bc-bar { width: 14px; margin: 0 auto; border-radius: 2px 2px 0 0; min-height: 3px; }
+.km-bc-lbl { font-size: 6.5px; font-weight: 700; text-transform: uppercase; color: #94A3B8; margin-top: 2px; }
+.km-bc-val { font-size: 7px; color: #64748B; font-weight: 600; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.km-bc-pct { font-size: 8px; font-weight: 700; text-align: center; margin-top: 1px; }
 .km-bc-pct.up   { color: #15803D; }
 .km-bc-pct.down { color: #B91C1C; }
 .km-bc-pct.flat { color: #64748B; }
@@ -1227,70 +1218,35 @@ function kmData() {
 
 // ── helpers ──
 
-// Thermometer SVG: tube with budget-line, fill above/below that line
-function kmThermometerHtml(d, fmtA) {
-  const pct   = d.actual / d.budget * 100;
-  const color = pct >= 100 ? '#10B981' : pct >= 88 ? '#F59E0B' : '#EF4444';
-  const cls   = pct >= 100 ? 'ok' : pct >= 88 ? 'warn' : 'bad';
-  const diff  = pct - 100;
-  const sign  = diff >= 0 ? '+' : '';
-  // Tube coords: top=4, bottom=66, height=62. Bulb center=74.
-  // Scale: 0%=bottom of tube, 120%=top. Budget (100%) sits at a fixed Y.
-  const TUBE_TOP = 4, TUBE_BOT = 66, TUBE_H = 62;
-  const budgetY = TUBE_BOT - (100 / 120) * TUBE_H;          // ≈ 14.3
-  const fillTopY = TUBE_BOT - Math.min(pct, 120) / 120 * TUBE_H;
-  const fillH    = TUBE_BOT - fillTopY;
-  // Clip fill to tube (don't overflow above top)
-  const clipTop  = Math.max(fillTopY, TUBE_TOP);
-  const clipH    = TUBE_BOT - clipTop;
-  return `<div class="km-therm-wrap">
-    <div class="km-therm-val">${fmtA(d.actual)}</div>
-    <svg viewBox="0 0 22 82" class="km-therm-svg">
-      <!-- tube background -->
-      <rect x="7" y="${TUBE_TOP}" width="8" height="${TUBE_H}" rx="4" fill="#E8EDF4"/>
-      <!-- fill -->
-      <rect x="7" y="${clipTop.toFixed(1)}" width="8" height="${clipH.toFixed(1)}" rx="3" fill="${color}"/>
-      <!-- budget line (solid, extends past tube sides) -->
-      <line x1="2" y1="${budgetY.toFixed(1)}" x2="20" y2="${budgetY.toFixed(1)}"
-            stroke="#1E293B" stroke-width="1.8" stroke-linecap="round"/>
-      <!-- bulb -->
-      <circle cx="11" cy="74" r="7" fill="#E8EDF4"/>
-      <circle cx="11" cy="74" r="7" fill="${color}"/>
-      <circle cx="9"  cy="72" r="2" fill="white" opacity="0.3"/>
-    </svg>
-    <div class="km-therm-bgt">Bgt: ${fmtA(d.budget)}</div>
-    <span class="km-therm-pct ${cls}">${sign}${diff.toFixed(1)}%</span>
-  </div>`;
-}
-
-// Side-by-side vertical bars: Actual (left) vs Prior Year (right)
-function kmPYBarsHtml(d, fmtA, fmtPY) {
-  const pct  = (d.actual - d.py) / d.py * 100;
-  const abs  = Math.abs(pct).toFixed(1);
-  const sign = pct >= 0 ? '+' : '−';
-  const cls  = pct > 2 ? 'up' : pct >= -2 ? 'flat' : 'down';
-  const MAX_PX = 32;
-  const max = Math.max(d.actual, d.py);
-  const actualH = Math.max(Math.round(d.actual / max * MAX_PX), 3);
-  const pyH     = Math.max(Math.round(d.py     / max * MAX_PX), 3);
-  return `<div class="km-barchart">
+// Side-by-side bar chart comparing actual vs a reference value
+function kmCmpBars(actual, ref, fmtA, fmtRef, refLbl, pctLbl) {
+  const pct   = (actual - ref) / ref * 100;
+  const abs   = Math.abs(pct).toFixed(1);
+  const sign  = pct >= 0 ? '+' : '−';
+  const cls   = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+  const actColor = pct > 0 ? '#10B981' : pct < 0 ? '#EF4444' : '#94A3B8';
+  const MAX_PX = 24;
+  const max    = Math.max(actual, ref);
+  const actualH = Math.max(Math.round(actual / max * MAX_PX), 3);
+  const refH    = Math.max(Math.round(ref    / max * MAX_PX), 3);
+  return `<div class="km-cmp-chart">
     <div class="km-barchart-bars">
       <div class="km-bc-col">
         <div class="km-bc-bar-wrap">
-          <div class="km-bc-bar" style="height:${actualH}px;background:#3B82F6"></div>
+          <div class="km-bc-bar" style="height:${actualH}px;background:${actColor}"></div>
         </div>
         <div class="km-bc-lbl">Act</div>
-        <div class="km-bc-val">${fmtA(d.actual)}</div>
+        <div class="km-bc-val">${fmtA(actual)}</div>
       </div>
       <div class="km-bc-col">
         <div class="km-bc-bar-wrap">
-          <div class="km-bc-bar" style="height:${pyH}px;background:#CBD5E1"></div>
+          <div class="km-bc-bar" style="height:${refH}px;background:#CBD5E1"></div>
         </div>
-        <div class="km-bc-lbl">PY</div>
-        <div class="km-bc-val">${fmtPY(d.py)}</div>
+        <div class="km-bc-lbl">${refLbl}</div>
+        <div class="km-bc-val">${fmtRef(ref)}</div>
       </div>
     </div>
-    <div class="km-bc-pct ${cls}">${sign}${abs}% vs PY</div>
+    <div class="km-bc-pct ${cls}">${sign}${abs}% ${pctLbl}</div>
   </div>`;
 }
 
@@ -1298,8 +1254,8 @@ function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml) {
   return `<div class="km-period-col">
     <div class="km-period-lbl">${label}</div>
     <div class="km-period-body">
-      ${kmThermometerHtml(d, fmtA)}
-      ${kmPYBarsHtml(d, fmtA, fmtPY)}
+      ${kmCmpBars(d.actual, d.budget, fmtA, fmtA,  'Bgt', 'vs Bgt')}
+      ${kmCmpBars(d.actual, d.py,     fmtA, fmtPY, 'PY',  'vs PY')}
     </div>
     ${neededHtml}
   </div>`;
