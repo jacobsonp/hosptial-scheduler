@@ -321,7 +321,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
 /* Three-column grid so actual / vs-Bgt / vs-PY align across cards of the same width */
-.km-period-row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: baseline; gap: 4px; margin-bottom: 2px; }
+.km-period-row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: baseline; gap: 2px; margin-bottom: 2px; }
 .km-card-body.single-col .km-period-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 .km-actual-val { font-size: 20px; font-weight: 800; color: #0F2D4A; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .km-pct-row { font-size: 20px; font-weight: 800; white-space: nowrap; }
@@ -1230,19 +1230,21 @@ function kmData() {
 
 // ── helpers ──
 
-function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml) {
-  function pctRow(actual, ref, refLbl) {
+function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml, lowerBgtIsBetter) {
+  function pctRow(actual, ref, refLbl, invert) {
     const pct  = (actual - ref) / ref * 100;
     const sign = pct >= 0 ? '+' : '−';
-    const cls  = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+    const good = invert ? pct < 0 : pct > 0;
+    const bad  = invert ? pct > 0 : pct < 0;
+    const cls  = good ? 'up' : bad ? 'down' : 'flat';
     return `<div class="km-pct-row ${cls}">${sign}${Math.abs(pct).toFixed(1)}% vs ${refLbl}</div>`;
   }
   return `<div class="km-period-col">
     <div class="km-period-lbl">${label}</div>
     <div class="km-period-row">
       <div class="km-actual-val">${fmtA(d.actual)}</div>
-      ${pctRow(d.actual, d.budget, 'Bgt')}
-      ${pctRow(d.actual, d.py,     'PY')}
+      ${pctRow(d.actual, d.budget, 'Bgt', lowerBgtIsBetter)}
+      ${pctRow(d.actual, d.py,     'PY',  false)}
     </div>
     ${neededHtml}
   </div>`;
@@ -1256,13 +1258,13 @@ function kmNeededHtml(d, metricKey) {
     const needed = d.visits.mtd.budget - d.visits.mtd.actual;
     if (needed <= 0) return `<div class="km-needed km-needed-met">&#10003; Visit budget met</div>`;
     const perDay = daysLeft > 0 ? `&thinsp;(${(needed / daysLeft).toFixed(1)}/day,&thinsp;${daysLeft}d left)` : '';
-    return `<div class="km-needed">Need <strong>${Math.round(needed)}</strong> more visits${perDay} to meet budget</div>`;
+    return `<div class="km-needed">Need <strong>${Math.round(needed)}</strong> more visits this month${perDay} to meet budget</div>`;
   }
   if (metricKey === 'revenue') {
     const needed = d.revenue.mtd.budget - d.revenue.mtd.actual;
     if (needed <= 0) return `<div class="km-needed km-needed-met">&#10003; Revenue budget met</div>`;
     const perDay = daysLeft > 0 ? `&thinsp;($${Math.round(needed / daysLeft).toLocaleString()}/day,&thinsp;${daysLeft}d left)` : '';
-    return `<div class="km-needed">Need <strong>$${Math.round(needed).toLocaleString()}</strong> more${perDay} to meet budget</div>`;
+    return `<div class="km-needed">Need <strong>$${Math.round(needed).toLocaleString()}</strong> more this month${perDay} to meet budget</div>`;
   }
   if (metricKey === 'atc') {
     const remVisits  = d.visits.mtd.budget  - d.visits.mtd.actual;
@@ -1270,7 +1272,7 @@ function kmNeededHtml(d, metricKey) {
     if (remVisits <= 0 || remRevenue <= 0)
       return `<div class="km-needed km-needed-met">&#10003; ATC on track</div>`;
     const atcNeeded = remRevenue / remVisits;
-    return `<div class="km-needed">Need <strong>$${atcNeeded.toFixed(2)}</strong> ATC on remaining <strong>${Math.round(remVisits)}</strong> visits to meet budget</div>`;
+    return `<div class="km-needed">Need <strong>$${atcNeeded.toFixed(2)}</strong> ATC on remaining <strong>${Math.round(remVisits)}</strong> visits this month to meet budget</div>`;
   }
   return '';
 }
@@ -1414,7 +1416,7 @@ function renderMetrics() {
     { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters', metricKey:'visits',  m:d.visits,  fmtA:fmtInt,  fmtPY:fmtInt,  ytdOnly:false },
     { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Avg transaction charge',   metricKey:'atc',     m:d.atc,     fmtA:fmtDol2, fmtPY:fmtDol2, ytdOnly:false },
     { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',  metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0, ytdOnly:false },
-    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin',         desc:'Operating margin % of rev',metricKey:'margin',  m:d.margin,  fmtA:fmtPct,  fmtPY:fmtPct,  ytdOnly:true  },
+    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin',         desc:'Operating margin % of rev',metricKey:'margin',  m:d.margin,  fmtA:fmtPct,  fmtPY:fmtPct,  ytdOnly:true, lowerBgtIsBetter:true },
   ].map(c => `
     <div class="km-card">
       <div class="km-card-hdr" style="background:${c.bg}">
@@ -1425,8 +1427,8 @@ function renderMetrics() {
         </div>
       </div>
       <div class="km-card-body${c.ytdOnly ? ' single-col' : ''}">
-        ${c.ytdOnly ? '' : kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey))}
-        ${kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '')}
+        ${c.ytdOnly ? '' : kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey), c.lowerBgtIsBetter)}
+        ${kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerBgtIsBetter)}
       </div>
     </div>
   `).join('');
