@@ -26,6 +26,10 @@ body {
 .nav-user { color: rgba(255,255,255,0.55); font-size: 11.5px; }
 .nav-logout { color: rgba(255,255,255,0.5); background: none; border: 1px solid rgba(255,255,255,0.18); border-radius: 5px; padding: 3px 9px; font-size: 11.5px; cursor: pointer; transition: all 0.15s; }
 .nav-logout:hover { color: white; border-color: rgba(255,255,255,0.4); }
+.save-status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; transition: opacity 0.4s; opacity: 0; }
+.save-status.saving { opacity: 1; color: rgba(255,255,255,0.6); }
+.save-status.saved  { opacity: 1; color: #6EE7B7; }
+.save-status.error  { opacity: 1; color: #FCA5A5; background: rgba(239,68,68,0.2); }
 
 /* ── HEADER ── */
 header {
@@ -321,7 +325,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
 /* Three-column grid so actual / vs-Bgt / vs-PY align across cards of the same width */
-.km-period-row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: baseline; gap: 2px; margin-bottom: 2px; }
+.km-period-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 2px; }
 .km-card-body.single-col .km-period-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 .km-actual-val { font-size: 20px; font-weight: 800; color: #0F2D4A; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .km-pct-row { font-size: 20px; font-weight: 800; white-space: nowrap; }
@@ -369,6 +373,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
   <a href="/corporate.html" class="nav-link" id="corpRollupLink" style="display:none">Corporate Rollup</a>
   <div class="nav-right">
     <span class="nav-user" id="navUser"></span>
+    <span class="save-status" id="saveStatus"></span>
     <button class="nav-logout" onclick="logout()">Sign Out</button>
   </div>
 </nav>
@@ -640,10 +645,28 @@ async function loadSchedule() {
 // ── SAVE ───────────────────────────────────────────────────
 
 function markDirty(date) { if (!isReadOnly) dirtyDates.add(date); }
+let _saveTimer;
+function setSaveStatus(cls, text) {
+  const el = document.getElementById('saveStatus');
+  if (!el) return;
+  el.className = 'save-status ' + cls;
+  el.textContent = text;
+  clearTimeout(_saveTimer);
+  if (cls !== 'error') _saveTimer = setTimeout(() => { el.className = 'save-status'; }, 2000);
+}
 async function flushSave() {
   if (isReadOnly || dirtyDates.size === 0) return;
   const dates = [...dirtyDates]; dirtyDates.clear();
-  await Promise.all(dates.map(saveDay));
+  setSaveStatus('saving', 'Saving…');
+  try {
+    await Promise.all(dates.map(saveDay));
+    setSaveStatus('saved', 'Saved ✓');
+  } catch (e) {
+    // Put dates back so next action retries them
+    dates.forEach(d => dirtyDates.add(d));
+    setSaveStatus('error', '⚠ Save failed — data may be lost on refresh');
+    console.error('Save failed:', e);
+  }
 }
 async function saveDay(date) {
   const day = S.schedule[date] || { dvms:[], staff:[], visitCount:0 };
@@ -1230,12 +1253,12 @@ function kmData() {
 
 // ── helpers ──
 
-function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml, lowerBgtIsBetter) {
-  function pctRow(actual, ref, refLbl, invert) {
+function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml, lowerIsBetter) {
+  function pctRow(actual, ref, refLbl) {
     const pct  = (actual - ref) / ref * 100;
     const sign = pct >= 0 ? '+' : '−';
-    const good = invert ? pct < 0 : pct > 0;
-    const bad  = invert ? pct > 0 : pct < 0;
+    const good = lowerIsBetter ? pct < 0 : pct > 0;
+    const bad  = lowerIsBetter ? pct > 0 : pct < 0;
     const cls  = good ? 'up' : bad ? 'down' : 'flat';
     return `<div class="km-pct-row ${cls}">${sign}${Math.abs(pct).toFixed(1)}% vs ${refLbl}</div>`;
   }
@@ -1243,8 +1266,8 @@ function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml, lowerBgtIsBetter) {
     <div class="km-period-lbl">${label}</div>
     <div class="km-period-row">
       <div class="km-actual-val">${fmtA(d.actual)}</div>
-      ${pctRow(d.actual, d.budget, 'Bgt', lowerBgtIsBetter)}
-      ${pctRow(d.actual, d.py,     'PY',  false)}
+      ${pctRow(d.actual, d.budget, 'Bgt')}
+      ${pctRow(d.actual, d.py,     'PY')}
     </div>
     ${neededHtml}
   </div>`;
@@ -1416,7 +1439,7 @@ function renderMetrics() {
     { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters', metricKey:'visits',  m:d.visits,  fmtA:fmtInt,  fmtPY:fmtInt,  ytdOnly:false },
     { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Avg transaction charge',   metricKey:'atc',     m:d.atc,     fmtA:fmtDol2, fmtPY:fmtDol2, ytdOnly:false },
     { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',  metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0, ytdOnly:false },
-    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin',         desc:'Operating margin % of rev',metricKey:'margin',  m:d.margin,  fmtA:fmtPct,  fmtPY:fmtPct,  ytdOnly:true, lowerBgtIsBetter:true },
+    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin',         desc:'Operating margin % of rev',metricKey:'margin',  m:d.margin,  fmtA:fmtPct,  fmtPY:fmtPct,  ytdOnly:true, lowerIsBetter:true },
   ].map(c => `
     <div class="km-card">
       <div class="km-card-hdr" style="background:${c.bg}">
@@ -1427,8 +1450,8 @@ function renderMetrics() {
         </div>
       </div>
       <div class="km-card-body${c.ytdOnly ? ' single-col' : ''}">
-        ${c.ytdOnly ? '' : kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey), c.lowerBgtIsBetter)}
-        ${kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerBgtIsBetter)}
+        ${c.ytdOnly ? '' : kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey), c.lowerIsBetter)}
+        ${kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerIsBetter)}
       </div>
     </div>
   `).join('');
