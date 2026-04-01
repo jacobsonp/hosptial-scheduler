@@ -316,26 +316,15 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-card-name { font-size: 12px; font-weight: 700; color: #0F2D4A; }
 .km-card-desc { font-size: 9px; color: #94A3B8; margin-top: 1px; }
 .km-card-body { display: grid; grid-template-columns: 1fr 1fr; }
-.km-card-body.single-col { grid-template-columns: 1fr; max-width: 260px; }
-.km-period-col { padding: 5px 8px 6px; }
+.km-card-body.single-col { grid-template-columns: 1fr; max-width: 220px; }
+.km-period-col { padding: 6px 10px 8px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
-.km-period-body { display: flex; gap: 4px; align-items: flex-start; }
-/* Horizontal paired bar charts */
-.km-cmp-chart { flex: 1; min-width: 0; }
-.km-cmp-chart + .km-cmp-chart { border-left: 1px solid #F1F5F9; padding-left: 5px; }
-.km-hbar-group { margin-bottom: 2px; }
-.km-hbar-row { display: flex; align-items: center; gap: 3px; }
-.km-hbar-lbl { font-size: 6.5px; font-weight: 700; text-transform: uppercase; color: #94A3B8; width: 13px; flex-shrink: 0; text-align: right; }
-.km-hbar-track { flex: 1; height: 7px; background: #F1F5F9; overflow: hidden; }
-.km-hbar-top .km-hbar-track { border-radius: 2px 2px 0 0; }
-.km-hbar-bot .km-hbar-track { border-radius: 0 0 2px 2px; }
-.km-hbar-fill { height: 100%; }
-.km-hbar-val { font-size: 6.5px; color: #64748B; font-weight: 600; white-space: nowrap; flex-shrink: 0; text-align: right; max-width: 38px; overflow: hidden; text-overflow: ellipsis; }
-.km-bc-pct { font-size: 8px; font-weight: 700; }
-.km-bc-pct.up   { color: #15803D; }
-.km-bc-pct.down { color: #B91C1C; }
-.km-bc-pct.flat { color: #64748B; }
+.km-actual-val { font-size: 20px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 4px; }
+.km-pct-row { font-size: 9.5px; font-weight: 700; margin-top: 2px; }
+.km-pct-row.up   { color: #15803D; }
+.km-pct-row.down { color: #B91C1C; }
+.km-pct-row.flat { color: #64748B; }
 /* Needed text */
 .km-needed { margin-top: 6px; padding-top: 6px; border-top: 1px solid #F1F5F9; font-size: 9.5px; color: #64748B; line-height: 1.4; }
 .km-needed strong { color: #0F2D4A; font-weight: 700; }
@@ -1220,40 +1209,18 @@ function kmData() {
 
 // ── helpers ──
 
-// Horizontal paired bar chart: Actual bar touching reference bar, both horizontal
-function kmCmpBars(actual, ref, fmtA, fmtRef, refLbl, pctLbl) {
-  const pct      = (actual - ref) / ref * 100;
-  const abs      = Math.abs(pct).toFixed(1);
-  const sign     = pct >= 0 ? '+' : '−';
-  const cls      = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-  const actColor = pct > 0 ? '#10B981' : pct < 0 ? '#EF4444' : '#94A3B8';
-  const max      = Math.max(actual, ref);
-  const actualW  = (actual / max * 100).toFixed(1);
-  const refW     = (ref    / max * 100).toFixed(1);
-  return `<div class="km-cmp-chart">
-    <div class="km-hbar-group">
-      <div class="km-hbar-row km-hbar-top">
-        <div class="km-hbar-lbl">Act</div>
-        <div class="km-hbar-track"><div class="km-hbar-fill" style="width:${actualW}%;background:${actColor}"></div></div>
-        <div class="km-hbar-val">${fmtA(actual)}</div>
-      </div>
-      <div class="km-hbar-row km-hbar-bot">
-        <div class="km-hbar-lbl">${refLbl}</div>
-        <div class="km-hbar-track"><div class="km-hbar-fill" style="width:${refW}%;background:#CBD5E1"></div></div>
-        <div class="km-hbar-val">${fmtRef(ref)}</div>
-      </div>
-    </div>
-    <div class="km-bc-pct ${cls}">${sign}${abs}% ${pctLbl}</div>
-  </div>`;
-}
-
 function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml) {
+  function pctRow(actual, ref, refLbl) {
+    const pct  = (actual - ref) / ref * 100;
+    const sign = pct >= 0 ? '+' : '−';
+    const cls  = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+    return `<div class="km-pct-row ${cls}">${sign}${Math.abs(pct).toFixed(1)}% vs ${refLbl}</div>`;
+  }
   return `<div class="km-period-col">
     <div class="km-period-lbl">${label}</div>
-    <div class="km-period-body">
-      ${kmCmpBars(d.actual, d.budget, fmtA, fmtA,  'Bgt', 'vs Bgt')}
-      ${kmCmpBars(d.actual, d.py,     fmtA, fmtPY, 'PY',  'vs PY')}
-    </div>
+    <div class="km-actual-val">${fmtA(d.actual)}</div>
+    ${pctRow(d.actual, d.budget, 'Bgt')}
+    ${pctRow(d.actual, d.py,     'PY')}
     ${neededHtml}
   </div>`;
 }
