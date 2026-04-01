@@ -320,8 +320,9 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-period-col { padding: 6px 10px 8px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
-.km-actual-val { font-size: 20px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 4px; }
-.km-pct-row { font-size: 9.5px; font-weight: 700; margin-top: 2px; }
+.km-period-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 2px; }
+.km-actual-val { font-size: 20px; font-weight: 800; color: #0F2D4A; line-height: 1; }
+.km-pct-row { font-size: 20px; font-weight: 800; }
 .km-pct-row.up   { color: #15803D; }
 .km-pct-row.down { color: #B91C1C; }
 .km-pct-row.flat { color: #64748B; }
@@ -1218,9 +1219,11 @@ function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml) {
   }
   return `<div class="km-period-col">
     <div class="km-period-lbl">${label}</div>
-    <div class="km-actual-val">${fmtA(d.actual)}</div>
-    ${pctRow(d.actual, d.budget, 'Bgt')}
-    ${pctRow(d.actual, d.py,     'PY')}
+    <div class="km-period-row">
+      <div class="km-actual-val">${fmtA(d.actual)}</div>
+      ${pctRow(d.actual, d.budget, 'Bgt')}
+      ${pctRow(d.actual, d.py,     'PY')}
+    </div>
     ${neededHtml}
   </div>`;
 }
