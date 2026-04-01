@@ -316,13 +316,13 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-card-name { font-size: 12px; font-weight: 700; color: #0F2D4A; }
 .km-card-desc { font-size: 9px; color: #94A3B8; margin-top: 1px; }
 .km-card-body { display: grid; grid-template-columns: 1fr 1fr; }
-.km-card-body.single-col { grid-template-columns: 1fr; max-width: 220px; }
+.km-card-body.single-col { grid-template-columns: 1fr; }
 .km-period-col { padding: 6px 10px 8px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
 /* Three-column grid so actual / vs-Bgt / vs-PY align across cards of the same width */
 .km-period-row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: baseline; gap: 4px; margin-bottom: 2px; }
-.km-card-body.single-col .km-period-row { justify-items: center; }
+.km-card-body.single-col .km-period-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 .km-actual-val { font-size: 20px; font-weight: 800; color: #0F2D4A; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .km-pct-row { font-size: 20px; font-weight: 800; white-space: nowrap; }
 .km-pct-row.up   { color: #15803D; }
@@ -983,15 +983,33 @@ function refreshMetricsCell(di) {
 }
 
 function refreshWeeklyCell() {
+  // Update the metrics-row week cell
   const metricsRow = document.querySelector('.metrics-row');
-  if (!metricsRow) return;
-  const cells = metricsRow.querySelectorAll('td');
-  const lastCell = cells[cells.length - 1];
-  if (!lastCell || !lastCell.classList.contains('week-metrics-cell')) return;
-  const tmp = document.createElement('table');
-  tmp.innerHTML = `<tbody><tr>${weekMetricsCell()}</tr></tbody>`;
-  const newCell = tmp.querySelector('.week-metrics-cell');
-  if (newCell) lastCell.replaceWith(newCell);
+  if (metricsRow) {
+    const cells = metricsRow.querySelectorAll('td');
+    const lastCell = cells[cells.length - 1];
+    if (lastCell && lastCell.classList.contains('week-metrics-cell')) {
+      const tmp = document.createElement('table');
+      tmp.innerHTML = `<tbody><tr>${weekMetricsCell()}</tr></tbody>`;
+      const newCell = tmp.querySelector('.week-metrics-cell');
+      if (newCell) lastCell.replaceWith(newCell);
+    }
+  }
+  // Also update the visit-row week cell (visits + revenue totals)
+  const visitRow = document.querySelector('.visit-row');
+  if (visitRow) {
+    const weekCell = visitRow.querySelector('td.week-cell');
+    if (weekCell) {
+      const dates = weekDates();
+      const wkVis = dates.reduce((s, d) => s + ((S.schedule[d]||{}).visitCount||0), 0);
+      const wkRev = dates.reduce((s, d) => s + ((S.schedule[d]||{}).expectedRevenue||0), 0);
+      const wkRevFmt = wkRev > 0 ? '$' + Math.round(wkRev).toLocaleString() : '—';
+      weekCell.innerHTML = `<div class="visit-inputs-wrap">
+        <div class="visit-row-item"><span class="visit-count-ro">${wkVis}</span><span class="visit-row-lbl">Total</span></div>
+        <div class="visit-row-item"><span class="visit-count-ro" style="font-size:14px;color:#0F766E">${wkRevFmt}</span><span class="visit-row-lbl" style="color:#0F766E">Revenue</span></div>
+      </div>`;
+    }
+  }
 }
 
 function refreshPersonStats(type, personId) {
