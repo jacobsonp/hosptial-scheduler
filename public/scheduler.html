@@ -326,18 +326,17 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-period-col { padding: 6px 10px 8px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
-/* Three-column grid so actual / vs-Bgt / vs-PY align across cards of the same width */
-.km-period-row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: baseline; gap: 2px; margin-bottom: 2px; }
-.km-card-body.single-col .km-period-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-.km-actual-val { font-size: 20px; font-weight: 800; color: #0F2D4A; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.km-pct-row { font-size: 20px; font-weight: 800; white-space: nowrap; }
+/* Single row: actual | vs Bgt | vs PY on one line, no wrapping */
+.km-period-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; flex-wrap: nowrap; margin-bottom: 2px; }
+.km-actual-val { font-size: 13px; font-weight: 700; color: #0F2D4A; line-height: 1; white-space: nowrap; }
+.km-pct-row { font-size: 13px; font-weight: 700; white-space: nowrap; }
 .km-pct-row.up   { color: #15803D; }
 .km-pct-row.down { color: #B91C1C; }
 .km-pct-row.flat { color: #64748B; }
 /* Needed text */
-.km-needed { margin-top: 6px; padding-top: 6px; border-top: 1px solid #F1F5F9; font-size: 13px; color: #64748B; line-height: 1.4; }
+.km-needed { margin-top: 5px; padding-top: 5px; border-top: 1px solid #F1F5F9; font-size: 10px; color: #64748B; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .km-needed strong { color: #0F2D4A; font-weight: 700; }
-.km-needed-met { color: #15803D; font-weight: 600; font-size: 13px; }
+.km-needed-met { color: #15803D; font-weight: 600; font-size: 10px; }
 /* Operational Metrics + DVM Productivity */
 .km-extra-section { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin: 0 16px 10px; overflow: hidden; }
 .km-section-hdr { background: #F8FAFC; padding: 7px 14px; border-bottom: 1px solid #EEF2F7; display: flex; align-items: center; gap: 8px; }
