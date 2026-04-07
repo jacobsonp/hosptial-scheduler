@@ -1233,21 +1233,21 @@ const KM_DATA = [
     atc:     { mtd:{actual:185.50, py:172.00, budget:180.00}, ytd:{actual:179.80, py:168.50, budget:182.00} },
     revenue: { mtd:{actual:76428,  py:66564,  budget:76500},  ytd:{actual:582552, py:501690, budget:618800} },
     cogs:        { mtd:{actual:22.4,  py:23.1,  budget:24.0},  ytd:{actual:21.9,  py:22.8,  budget:23.5} },
-    supportComp: { mtd:{actual:18750, py:17200, budget:17000} },
+    supportComp: { mtd:{actual:24.6,  py:25.8,  budget:22.2} },
   },
   {
     visits:  { mtd:{actual:538,    py:501,    budget:520},    ytd:{actual:4210,   py:3890,   budget:4100}  },
     atc:     { mtd:{actual:198.20, py:182.00, budget:195.00}, ytd:{actual:193.40, py:178.00, budget:196.00} },
     revenue: { mtd:{actual:106632, py:91182,  budget:101400}, ytd:{actual:813814, py:693420, budget:803600} },
     cogs:        { mtd:{actual:19.8,  py:21.5,  budget:21.0},  ytd:{actual:20.2,  py:21.0,  budget:21.5} },
-    supportComp: { mtd:{actual:23400, py:21800, budget:24000} },
+    supportComp: { mtd:{actual:21.9,  py:23.4,  budget:22.0} },
   },
   {
     visits:  { mtd:{actual:289,    py:312,    budget:305},    ytd:{actual:2310,   py:2490,   budget:2440}  },
     atc:     { mtd:{actual:162.80, py:158.50, budget:170.00}, ytd:{actual:159.40, py:154.20, budget:168.00} },
     revenue: { mtd:{actual:47049,  py:49452,  budget:51850},  ytd:{actual:368214, py:383718, budget:409920} },
     cogs:        { mtd:{actual:26.3,  py:25.2,  budget:25.0},  ytd:{actual:25.8,  py:24.9,  budget:25.0} },
-    supportComp: { mtd:{actual:12800, py:11900, budget:12000} },
+    supportComp: { mtd:{actual:27.2,  py:24.7,  budget:23.4} },
   },
 ];
 
@@ -1445,7 +1445,7 @@ function renderMetrics() {
   ];
   const narrow = [
     { icon:'🏷️', bg:'#FFF1F2', iconBg:'#FFE4E6', name:'COGS',         desc:'Cost of goods sold %',   m:d.cogs,         fmtA:fmtPct,  fmtPY:fmtPct,  mtdOnly:true, lowerIsBetter:true, hidePY:true },
-    { icon:'👥', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Support Comp', desc:'Support staff compensation', m:d.supportComp, fmtA:fmtDol0, fmtPY:fmtDol0, mtdOnly:true, lowerIsBetter:true, hidePY:true },
+    { icon:'👥', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Support Comp', desc:'Support comp % of revenue', m:d.supportComp, fmtA:fmtPct,  fmtPY:fmtPct,  mtdOnly:true, lowerIsBetter:true, hidePY:true },
   ];
 
   document.getElementById('kmGrid').innerHTML =
