@@ -321,6 +321,12 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-card-desc { font-size: 9px; color: #94A3B8; margin-top: 1px; }
 .km-card-body { display: grid; grid-template-columns: 1fr 1fr; }
 .km-card-body.single-col { grid-template-columns: 1fr; }
+/* COGS + Margin sit side by side inside one grid cell */
+.km-paired { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* Compact vertical layout for narrow paired cards */
+.km-card-body.paired .km-period-row { display: block; }
+.km-card-body.paired .km-actual-val { font-size: 15px; line-height: 1.2; margin-bottom: 2px; }
+.km-card-body.paired .km-pct-row    { font-size: 11px; margin-top: 1px; }
 .km-period-col { padding: 6px 10px 8px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
@@ -1227,22 +1233,25 @@ function switchTab(tab) {
 // Dummy data keyed by 0-based location index (cycles for any number of locations)
 const KM_DATA = [
   {
-    visits:  { mtd:{actual:412, py:387, budget:425},  ytd:{actual:3240, py:2980, budget:3400} },
+    visits:  { mtd:{actual:412,    py:387,    budget:425},    ytd:{actual:3240,   py:2980,   budget:3400}  },
     atc:     { mtd:{actual:185.50, py:172.00, budget:180.00}, ytd:{actual:179.80, py:168.50, budget:182.00} },
     revenue: { mtd:{actual:76428,  py:66564,  budget:76500},  ytd:{actual:582552, py:501690, budget:618800} },
-    margin:  { mtd:{actual:28.4, py:26.1, budget:30.0}, ytd:{actual:27.9, py:25.8, budget:30.0} },
+    cogs:    { mtd:{actual:22.4,   py:23.1,   budget:24.0},   ytd:{actual:21.9,   py:22.8,   budget:23.5}  },
+    margin:  { mtd:{actual:28.4,   py:26.1,   budget:30.0},   ytd:{actual:27.9,   py:25.8,   budget:30.0}  },
   },
   {
-    visits:  { mtd:{actual:538, py:501, budget:520},  ytd:{actual:4210, py:3890, budget:4100} },
+    visits:  { mtd:{actual:538,    py:501,    budget:520},    ytd:{actual:4210,   py:3890,   budget:4100}  },
     atc:     { mtd:{actual:198.20, py:182.00, budget:195.00}, ytd:{actual:193.40, py:178.00, budget:196.00} },
     revenue: { mtd:{actual:106632, py:91182,  budget:101400}, ytd:{actual:813814, py:693420, budget:803600} },
-    margin:  { mtd:{actual:31.2, py:28.9, budget:32.0}, ytd:{actual:30.5, py:28.2, budget:32.0} },
+    cogs:    { mtd:{actual:19.8,   py:21.5,   budget:21.0},   ytd:{actual:20.2,   py:21.0,   budget:21.5}  },
+    margin:  { mtd:{actual:31.2,   py:28.9,   budget:32.0},   ytd:{actual:30.5,   py:28.2,   budget:32.0}  },
   },
   {
-    visits:  { mtd:{actual:289, py:312, budget:305},  ytd:{actual:2310, py:2490, budget:2440} },
+    visits:  { mtd:{actual:289,    py:312,    budget:305},    ytd:{actual:2310,   py:2490,   budget:2440}  },
     atc:     { mtd:{actual:162.80, py:158.50, budget:170.00}, ytd:{actual:159.40, py:154.20, budget:168.00} },
     revenue: { mtd:{actual:47049,  py:49452,  budget:51850},  ytd:{actual:368214, py:383718, budget:409920} },
-    margin:  { mtd:{actual:24.1, py:25.8, budget:27.0}, ytd:{actual:23.8, py:25.3, budget:27.0} },
+    cogs:    { mtd:{actual:26.3,   py:25.2,   budget:25.0},   ytd:{actual:25.8,   py:24.9,   budget:25.0}  },
+    margin:  { mtd:{actual:24.1,   py:25.8,   budget:27.0},   ytd:{actual:23.8,   py:25.3,   budget:27.0}  },
   },
 ];
 
@@ -1253,7 +1262,7 @@ function kmData() {
 
 // ── helpers ──
 
-function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml, lowerIsBetter) {
+function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml, lowerIsBetter, hidePY) {
   function pctRow(actual, ref, refLbl) {
     const pct  = (actual - ref) / ref * 100;
     const sign = pct >= 0 ? '+' : '−';
@@ -1267,7 +1276,7 @@ function kmPeriodCol(label, d, fmtA, fmtPY, neededHtml, lowerIsBetter) {
     <div class="km-period-row">
       <div class="km-actual-val">${fmtA(d.actual)}</div>
       ${pctRow(d.actual, d.budget, 'Bgt')}
-      ${pctRow(d.actual, d.py,     'PY')}
+      ${hidePY ? '' : pctRow(d.actual, d.py, 'PY')}
     </div>
     ${neededHtml}
   </div>`;
@@ -1307,38 +1316,12 @@ const OPS_DATA = [
   { orc:{actual:79,goal:90}, fwdBook:{actual:68,goal:75}, invoca:{actual:94,goal:92}, leadTime:{actual:5.8,goal:3.5}, onlineBook:{actual:27,goal:30} },
 ];
 
-// ── DVM Productivity dummy data ──
-const DVM_PROD_DATA = [
-  {
-    dvms: [
-      { name:'Dr. Smith',    months:[{v:3.1,g:3.0},{v:2.8,g:3.0},{v:3.2,g:3.0}], mtd:{v:3.4,g:3.0} },
-      { name:'Dr. Johnson',  months:[{v:2.6,g:3.0},{v:2.9,g:3.0},{v:2.7,g:3.0}], mtd:{v:2.8,g:3.0} },
-      { name:'Dr. Williams', months:[{v:3.3,g:3.0},{v:3.5,g:3.0},{v:3.1,g:3.0}], mtd:{v:3.0,g:3.0} },
-    ]
-  },
-  {
-    dvms: [
-      { name:'Dr. Lee',   months:[{v:3.4,g:3.2},{v:3.1,g:3.2},{v:3.6,g:3.2}], mtd:{v:3.5,g:3.2} },
-      { name:'Dr. Chen',  months:[{v:2.9,g:3.2},{v:3.0,g:3.2},{v:2.8,g:3.2}], mtd:{v:3.1,g:3.2} },
-      { name:'Dr. Patel', months:[{v:3.3,g:3.2},{v:3.5,g:3.2},{v:3.2,g:3.2}], mtd:{v:3.3,g:3.2} },
-    ]
-  },
-  {
-    dvms: [
-      { name:'Dr. Garcia', months:[{v:2.7,g:2.8},{v:2.5,g:2.8},{v:2.9,g:2.8}], mtd:{v:2.6,g:2.8} },
-      { name:'Dr. Kim',    months:[{v:3.0,g:2.8},{v:2.8,g:2.8},{v:3.1,g:2.8}], mtd:{v:2.9,g:2.8} },
-      { name:'Dr. Brown',  months:[{v:2.4,g:2.8},{v:2.6,g:2.8},{v:2.5,g:2.8}], mtd:{v:2.4,g:2.8} },
-    ]
-  },
-];
+// Per-DVM varied goals (none < 2.0); cycles if more DVMs than entries
+const DVM_GOALS = [3.0, 2.5, 3.2, 2.8, 3.5, 2.2, 2.6, 3.0, 2.8, 3.1, 2.4, 3.3];
 
 function opsData() {
   const idx = (parseInt(locationId) - 1 + OPS_DATA.length) % OPS_DATA.length;
   return OPS_DATA[idx];
-}
-function dvmProdData() {
-  const idx = (parseInt(locationId) - 1 + DVM_PROD_DATA.length) % DVM_PROD_DATA.length;
-  return DVM_PROD_DATA[idx];
 }
 
 function renderOpsSection(ops) {
@@ -1372,16 +1355,18 @@ function renderOpsSection(ops) {
   </div>`;
 }
 
-function renderDvmSection(prod) {
+function renderDvmSection() {
+  if (!S.dvms || S.dvms.length === 0) return '';
   const now    = new Date();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // Last 3 calendar months before current
-  const mo = now.getMonth();
-  const yr = now.getFullYear();
-  const colLabels = [-3,-2,-1].map(offset => {
-    const d = new Date(yr, mo + offset, 1);
-    return months[d.getMonth()];
-  });
+  const mo = now.getMonth(), yr = now.getFullYear();
+  const colLabels = [-3,-2,-1].map(offset => months[(new Date(yr, mo + offset, 1)).getMonth()]);
+
+  // Deterministic dummy actual: variance ±0.4 seeded by dvm index + month offset
+  function pseudoActual(dvmIdx, timeOffset, goal) {
+    const s = (dvmIdx * 17 + timeOffset * 11) % 21;
+    return Math.max(2.0, +(goal + (s - 10) * 0.04).toFixed(1));
+  }
 
   function dvmPctCell(v, g) {
     const pct = v / g * 100;
@@ -1393,12 +1378,15 @@ function renderDvmSection(prod) {
     </td>`;
   }
 
-  const rows = prod.dvms.map(dvm => `<tr>
-    <td class="name">${dvm.name}</td>
-    ${dvm.months.map((m,i) => dvmPctCell(m.v, m.g)).join('')}
-    ${dvmPctCell(dvm.mtd.v, dvm.mtd.g)}
-    <td class="right" style="font-size:9.5px;color:#94A3B8">${dvm.mtd.g.toFixed(1)}</td>
-  </tr>`).join('');
+  const rows = S.dvms.map((dvm, i) => {
+    const goal = DVM_GOALS[i % DVM_GOALS.length];
+    return `<tr>
+      <td class="name">${dvm.name}</td>
+      ${[0,1,2].map(mi => dvmPctCell(pseudoActual(i, mi, goal), goal)).join('')}
+      ${dvmPctCell(pseudoActual(i, 3, goal), goal)}
+      <td class="right" style="font-size:9.5px;color:#94A3B8">${goal.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
 
   return `<div class="km-extra-section">
     <div class="km-section-hdr">
@@ -1423,7 +1411,6 @@ function renderDvmSection(prod) {
 function renderMetrics() {
   const d   = kmData();
   const ops = opsData();
-  const prod = dvmProdData();
   const now = new Date();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('kmPeriodChip').textContent =
@@ -1434,31 +1421,43 @@ function renderMetrics() {
   const fmtDol0 = v => '$' + Math.round(v).toLocaleString();
   const fmtPct  = v => v.toFixed(1) + '%';
 
-  // Visits, ATC, Revenue: MTD + YTD.  Margin: YTD only.
-  const cardsHtml = [
-    { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters', metricKey:'visits',  m:d.visits,  fmtA:fmtInt,  fmtPY:fmtInt,  ytdOnly:false },
-    { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Avg transaction charge',   metricKey:'atc',     m:d.atc,     fmtA:fmtDol2, fmtPY:fmtDol2, ytdOnly:false },
-    { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',  metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0, ytdOnly:false },
-    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin',         desc:'Operating margin % of rev',metricKey:'margin',  m:d.margin,  fmtA:fmtPct,  fmtPY:fmtPct,  ytdOnly:true, lowerIsBetter:true },
-  ].map(c => `
-    <div class="km-card">
+  function renderCard(c, paired) {
+    const isSingle = c.ytdOnly || c.mtdOnly;
+    const bodyClass = 'km-card-body' + (isSingle ? ' single-col' : '') + (paired ? ' paired' : '');
+    let bodyHtml;
+    if (c.mtdOnly) {
+      bodyHtml = kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, '', c.lowerIsBetter, c.hidePY);
+    } else if (c.ytdOnly) {
+      bodyHtml = kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerIsBetter, c.hidePY);
+    } else {
+      bodyHtml = kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey), c.lowerIsBetter)
+               + kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerIsBetter);
+    }
+    return `<div class="km-card">
       <div class="km-card-hdr" style="background:${c.bg}">
         <div class="km-icon" style="background:${c.iconBg}">${c.icon}</div>
-        <div>
-          <div class="km-card-name">${c.name}</div>
-          <div class="km-card-desc">${c.desc}</div>
-        </div>
+        <div><div class="km-card-name">${c.name}</div><div class="km-card-desc">${c.desc}</div></div>
       </div>
-      <div class="km-card-body${c.ytdOnly ? ' single-col' : ''}">
-        ${c.ytdOnly ? '' : kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey), c.lowerIsBetter)}
-        ${kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerIsBetter)}
-      </div>
-    </div>
-  `).join('');
+      <div class="${bodyClass}">${bodyHtml}</div>
+    </div>`;
+  }
 
-  document.getElementById('kmGrid').innerHTML = cardsHtml;
+  const wide = [
+    { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters', metricKey:'visits',  m:d.visits,  fmtA:fmtInt,  fmtPY:fmtInt  },
+    { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Avg transaction charge',   metricKey:'atc',     m:d.atc,     fmtA:fmtDol2, fmtPY:fmtDol2 },
+    { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',  metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0 },
+  ];
+  const narrow = [
+    { icon:'🏷️', bg:'#FFF1F2', iconBg:'#FFE4E6', name:'COGS',   desc:'Cost of goods sold %', m:d.cogs,   fmtA:fmtPct, fmtPY:fmtPct, mtdOnly:true, lowerIsBetter:true, hidePY:true  },
+    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin', desc:'Operating margin %',   m:d.margin, fmtA:fmtPct, fmtPY:fmtPct, ytdOnly:true, lowerIsBetter:true               },
+  ];
+
+  document.getElementById('kmGrid').innerHTML =
+    wide.map(c => renderCard(c, false)).join('') +
+    `<div class="km-paired">${narrow.map(c => renderCard(c, true)).join('')}</div>`;
+
   document.getElementById('kmExtras').innerHTML =
-    renderOpsSection(ops) + renderDvmSection(prod);
+    renderOpsSection(ops) + renderDvmSection();
 }
 </script>
 </body>
