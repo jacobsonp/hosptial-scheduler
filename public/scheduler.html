@@ -323,10 +323,6 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-card-body.single-col { grid-template-columns: 1fr; }
 /* COGS + Margin sit side by side inside one grid cell */
 .km-paired { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-/* Compact vertical layout for narrow paired cards */
-.km-card-body.paired .km-period-row { display: block; }
-.km-card-body.paired .km-actual-val { font-size: 15px; line-height: 1.2; margin-bottom: 2px; }
-.km-card-body.paired .km-pct-row    { font-size: 11px; margin-top: 1px; }
 .km-period-col { padding: 6px 10px 8px; }
 .km-period-col + .km-period-col { border-left: 1px solid #F4F6F9; }
 .km-period-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94A3B8; margin-bottom: 4px; }
@@ -352,7 +348,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-ops-tile:last-child { border-right: none; }
 .km-ops-name { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #94A3B8; margin-bottom: 4px; }
 .km-ops-val { font-size: 18px; font-weight: 800; color: #0F2D4A; line-height: 1; margin-bottom: 4px; }
-.km-ops-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
+.km-ops-badge { display: inline-block; font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
 .km-ops-badge.ok   { background: #DCFCE7; color: #15803D; }
 .km-ops-badge.warn { background: #FEF9C3; color: #B45309; }
 .km-ops-badge.bad  { background: #FEE2E2; color: #B91C1C; }
@@ -1236,22 +1232,22 @@ const KM_DATA = [
     visits:  { mtd:{actual:412,    py:387,    budget:425},    ytd:{actual:3240,   py:2980,   budget:3400}  },
     atc:     { mtd:{actual:185.50, py:172.00, budget:180.00}, ytd:{actual:179.80, py:168.50, budget:182.00} },
     revenue: { mtd:{actual:76428,  py:66564,  budget:76500},  ytd:{actual:582552, py:501690, budget:618800} },
-    cogs:    { mtd:{actual:22.4,   py:23.1,   budget:24.0},   ytd:{actual:21.9,   py:22.8,   budget:23.5}  },
-    margin:  { mtd:{actual:28.4,   py:26.1,   budget:30.0},   ytd:{actual:27.9,   py:25.8,   budget:30.0}  },
+    cogs:        { mtd:{actual:22.4,  py:23.1,  budget:24.0},  ytd:{actual:21.9,  py:22.8,  budget:23.5} },
+    supportComp: { mtd:{actual:18750, py:17200, budget:17000} },
   },
   {
     visits:  { mtd:{actual:538,    py:501,    budget:520},    ytd:{actual:4210,   py:3890,   budget:4100}  },
     atc:     { mtd:{actual:198.20, py:182.00, budget:195.00}, ytd:{actual:193.40, py:178.00, budget:196.00} },
     revenue: { mtd:{actual:106632, py:91182,  budget:101400}, ytd:{actual:813814, py:693420, budget:803600} },
-    cogs:    { mtd:{actual:19.8,   py:21.5,   budget:21.0},   ytd:{actual:20.2,   py:21.0,   budget:21.5}  },
-    margin:  { mtd:{actual:31.2,   py:28.9,   budget:32.0},   ytd:{actual:30.5,   py:28.2,   budget:32.0}  },
+    cogs:        { mtd:{actual:19.8,  py:21.5,  budget:21.0},  ytd:{actual:20.2,  py:21.0,  budget:21.5} },
+    supportComp: { mtd:{actual:23400, py:21800, budget:24000} },
   },
   {
     visits:  { mtd:{actual:289,    py:312,    budget:305},    ytd:{actual:2310,   py:2490,   budget:2440}  },
     atc:     { mtd:{actual:162.80, py:158.50, budget:170.00}, ytd:{actual:159.40, py:154.20, budget:168.00} },
     revenue: { mtd:{actual:47049,  py:49452,  budget:51850},  ytd:{actual:368214, py:383718, budget:409920} },
-    cogs:    { mtd:{actual:26.3,   py:25.2,   budget:25.0},   ytd:{actual:25.8,   py:24.9,   budget:25.0}  },
-    margin:  { mtd:{actual:24.1,   py:25.8,   budget:27.0},   ytd:{actual:23.8,   py:25.3,   budget:27.0}  },
+    cogs:        { mtd:{actual:26.3,  py:25.2,  budget:25.0},  ytd:{actual:25.8,  py:24.9,  budget:25.0} },
+    supportComp: { mtd:{actual:12800, py:11900, budget:12000} },
   },
 ];
 
@@ -1448,8 +1444,8 @@ function renderMetrics() {
     { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',  metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0 },
   ];
   const narrow = [
-    { icon:'🏷️', bg:'#FFF1F2', iconBg:'#FFE4E6', name:'COGS',   desc:'Cost of goods sold %', m:d.cogs,   fmtA:fmtPct, fmtPY:fmtPct, mtdOnly:true, lowerIsBetter:true, hidePY:true  },
-    { icon:'📊', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Margin', desc:'Operating margin %',   m:d.margin, fmtA:fmtPct, fmtPY:fmtPct, ytdOnly:true, lowerIsBetter:true               },
+    { icon:'🏷️', bg:'#FFF1F2', iconBg:'#FFE4E6', name:'COGS',         desc:'Cost of goods sold %',   m:d.cogs,         fmtA:fmtPct,  fmtPY:fmtPct,  mtdOnly:true, lowerIsBetter:true, hidePY:true },
+    { icon:'👥', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Support Comp', desc:'Support staff compensation', m:d.supportComp, fmtA:fmtDol0, fmtPY:fmtDol0, mtdOnly:true, lowerIsBetter:true, hidePY:true },
   ];
 
   document.getElementById('kmGrid').innerHTML =
