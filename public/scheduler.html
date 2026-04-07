@@ -313,7 +313,7 @@ table.sched-table { border-collapse: collapse; width: 100%; }
 .km-topbar { background: white; padding: 8px 18px; border-bottom: 1px solid #DDE3EC; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
 .km-topbar-title { font-size: 14px; font-weight: 700; color: #0F2D4A; }
 .km-period-chip { margin-left: auto; font-size: 11px; font-weight: 600; color: #475569; background: #F1F5F9; padding: 3px 11px; border-radius: 20px; border: 1px solid #DDE3EC; }
-.km-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px 8px; }
+.km-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 12px 16px 8px; }
 .km-card { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
 .km-card-hdr { padding: 8px 12px 7px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #F1F5F9; }
 .km-icon { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
@@ -1417,40 +1417,27 @@ function renderMetrics() {
   const fmtDol0 = v => '$' + Math.round(v).toLocaleString();
   const fmtPct  = v => v.toFixed(1) + '%';
 
-  function renderCard(c, paired) {
-    const isSingle = c.ytdOnly || c.mtdOnly;
-    const bodyClass = 'km-card-body' + (isSingle ? ' single-col' : '') + (paired ? ' paired' : '');
-    let bodyHtml;
-    if (c.mtdOnly) {
-      bodyHtml = kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, '', c.lowerIsBetter, c.hidePY);
-    } else if (c.ytdOnly) {
-      bodyHtml = kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerIsBetter, c.hidePY);
-    } else {
-      bodyHtml = kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, kmNeededHtml(d, c.metricKey), c.lowerIsBetter)
-               + kmPeriodCol('YTD', c.m.ytd, c.fmtA, c.fmtPY, '', c.lowerIsBetter);
-    }
+  function renderCard(c) {
+    const neededHtml = c.metricKey ? kmNeededHtml(d, c.metricKey) : '';
+    const bodyHtml = kmPeriodCol('MTD', c.m.mtd, c.fmtA, c.fmtPY, neededHtml, c.lowerIsBetter, c.hidePY);
     return `<div class="km-card">
       <div class="km-card-hdr" style="background:${c.bg}">
         <div class="km-icon" style="background:${c.iconBg}">${c.icon}</div>
         <div><div class="km-card-name">${c.name}</div><div class="km-card-desc">${c.desc}</div></div>
       </div>
-      <div class="${bodyClass}">${bodyHtml}</div>
+      <div class="km-card-body single-col">${bodyHtml}</div>
     </div>`;
   }
 
-  const wide = [
-    { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters', metricKey:'visits',  m:d.visits,  fmtA:fmtInt,  fmtPY:fmtInt  },
-    { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Avg transaction charge',   metricKey:'atc',     m:d.atc,     fmtA:fmtDol2, fmtPY:fmtDol2 },
-    { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',  metricKey:'revenue', m:d.revenue, fmtA:fmtDol0, fmtPY:fmtDol0 },
-  ];
-  const narrow = [
-    { icon:'🏷️', bg:'#FFF1F2', iconBg:'#FFE4E6', name:'COGS',         desc:'Cost of goods sold %',   m:d.cogs,         fmtA:fmtPct,  fmtPY:fmtPct,  mtdOnly:true, lowerIsBetter:true, hidePY:true },
-    { icon:'👥', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Support Comp', desc:'Support comp % of revenue', m:d.supportComp, fmtA:fmtPct,  fmtPY:fmtPct,  mtdOnly:true, lowerIsBetter:true, hidePY:true },
+  const cards = [
+    { icon:'🐾', bg:'#EFF6FF', iconBg:'#DBEAFE', name:'Patient Visits', desc:'Total patient encounters',    metricKey:'visits',  m:d.visits,      fmtA:fmtInt,  fmtPY:fmtInt  },
+    { icon:'💵', bg:'#F5F3FF', iconBg:'#EDE9FE', name:'ATC',            desc:'Avg transaction charge',       metricKey:'atc',     m:d.atc,         fmtA:fmtDol2, fmtPY:fmtDol2 },
+    { icon:'💰', bg:'#F0FDF4', iconBg:'#DCFCE7', name:'Revenue',        desc:'Total collected revenue',      metricKey:'revenue', m:d.revenue,     fmtA:fmtDol0, fmtPY:fmtDol0 },
+    { icon:'🏷️', bg:'#FFF1F2', iconBg:'#FFE4E6', name:'COGS',          desc:'Cost of goods sold %',         m:d.cogs,            fmtA:fmtPct,  fmtPY:fmtPct,  lowerIsBetter:true, hidePY:true },
+    { icon:'👥', bg:'#FFF7ED', iconBg:'#FFEDD5', name:'Support Comp',   desc:'Support comp % of revenue',    m:d.supportComp,     fmtA:fmtPct,  fmtPY:fmtPct,  lowerIsBetter:true, hidePY:true },
   ];
 
-  document.getElementById('kmGrid').innerHTML =
-    wide.map(c => renderCard(c, false)).join('') +
-    `<div class="km-paired">${narrow.map(c => renderCard(c, true)).join('')}</div>`;
+  document.getElementById('kmGrid').innerHTML = cards.map(renderCard).join('');
 
   document.getElementById('kmExtras').innerHTML =
     renderOpsSection(ops) + renderDvmSection();
